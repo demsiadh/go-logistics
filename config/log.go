@@ -17,11 +17,8 @@ const (
 func NewProductionLogger() *zap.Logger {
 	return zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-			TimeKey:        "timestamp",
 			LevelKey:       "level",
 			NameKey:        "logger",
-			CallerKey:      "caller",
-			MessageKey:     "message",
 			StacktraceKey:  "stacktrace",
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.LowercaseLevelEncoder,
