@@ -20,6 +20,7 @@ func NewProductionLogger() *zap.Logger {
 			LevelKey:       "level",
 			NameKey:        "logger",
 			StacktraceKey:  "stacktrace",
+			MessageKey:     "msg",
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.LowercaseLevelEncoder,
 			EncodeTime:     CustomTimeEncoder, // 使用自定义编码器

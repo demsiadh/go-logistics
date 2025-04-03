@@ -61,3 +61,7 @@ func getDefaultConfig() (cfg *MongoDBConfig) {
 	}
 	return
 }
+
+func init() {
+	InitMongoDB()
+}
