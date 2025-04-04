@@ -5,6 +5,7 @@ import (
 	"go_logistics/common"
 	"go_logistics/model"
 	"go_logistics/util"
+	"strconv"
 )
 
 // GetUserByName 获取用户信息
@@ -12,7 +13,7 @@ func GetUserByName(c *gin.Context) {
 	name := c.Query("name")
 	user, err := model.GetUserByName(name)
 	if err != nil {
-		common.ErrorResponse(c, common.UserNotFound.Code, common.UserNotFound.Message)
+		common.ErrorResponse(c, common.RecordNotFound)
 		return
 	}
 	common.SuccessResponseWithData(c, user)
@@ -26,10 +27,15 @@ func CreateUser(c *gin.Context) {
 	password := c.PostForm("password")
 	rePassword := c.PostForm("rePassword")
 	if name == "" || phone == "" || email == "" || password == "" || rePassword == "" {
-		common.ErrorResponse(c, common.UserInfoError.Code, common.UserInfoError.Message)
+		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	user := model.User{}
+	user, _ := model.GetUserByName(name)
+	if user.Status != 0 {
+		common.ErrorResponse(c, common.RecordExist)
+		return
+	}
+	user = &model.User{}
 	user.Name = name
 	user.Phone = phone
 	user.Email = email
@@ -37,9 +43,69 @@ func CreateUser(c *gin.Context) {
 	password = util.MakePassword(password, user.Salt)
 	user.Password = password
 	user.Status = model.Active
-	err := model.InsertUser(&user)
+	err := model.InsertUser(user)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError.Code, common.ServerError.Message)
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponse(c)
+}
+
+// GetUserList 获取用户列表
+func GetUserList(c *gin.Context) {
+	var dto model.FindUserListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	users, err := model.GetUserList(dto)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponseWithData(c, users)
+}
+
+// UpdateUser 更新用户信息
+func UpdateUser(c *gin.Context) {
+	name := c.PostForm("name")
+	phone := c.PostForm("phone")
+	email := c.PostForm("email")
+	status := c.PostForm("status")
+	if name == "" || phone == "" || email == "" || status == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	user, err := model.GetUserByName(name)
+	if err != nil {
+		common.ErrorResponse(c, common.RecordNotFound)
+	}
+	user.Phone = phone
+	user.Email = email
+	statusInt, err := strconv.Atoi(status)
+	if err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	user.Status = model.UserStatus(statusInt)
+	err = model.UpdateUser(user)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponse(c)
+}
+
+// DeleteUser 删除用户
+func DeleteUser(c *gin.Context) {
+	name := c.Query("name")
+	if name == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	err := model.DeleteUser(name)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
 		return
 	}
 	common.SuccessResponse(c)

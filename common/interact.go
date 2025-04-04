@@ -37,10 +37,10 @@ func SuccessResponseWithData(c *gin.Context, data interface{}) {
 	})
 }
 
-func ErrorResponse(c *gin.Context, code int, message string) {
+func ErrorResponse(c *gin.Context, err *ErrorMsg) {
 	c.JSON(http.StatusOK, Response{
-		Code:    code,
-		Message: message,
+		Code:    err.Code,
+		Message: err.Message,
 		Data:    nil,
 	})
 }
@@ -58,8 +58,13 @@ type ErrorMsg struct {
 	Message string
 }
 
+func (e *ErrorMsg) Error() string {
+	return e.Message
+}
+
 var (
-	UserNotFound  = &ErrorMsg{Code: 10001, Message: "用户不存在"}
-	UserInfoError = &ErrorMsg{Code: 10002, Message: "用户信息错误"}
-	ServerError   = &ErrorMsg{Code: 50001, Message: "服务器错误"}
+	ServerError    = &ErrorMsg{Code: 50001, Message: "服务器错误"}
+	ParamError     = &ErrorMsg{Code: 40001, Message: "参数错误"}
+	RecordNotFound = &ErrorMsg{Code: 60001, Message: "记录不存在"}
+	RecordExist    = &ErrorMsg{Code: 60002, Message: "记录已存在"}
 )

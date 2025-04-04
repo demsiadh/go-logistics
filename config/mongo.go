@@ -19,7 +19,7 @@ type MongoDBConfig struct {
 	AuthSource string
 }
 
-// 初始化MongoDB连接
+// InitMongoDB 初始化MongoDB连接
 func InitMongoDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -39,12 +39,14 @@ func InitMongoDB() {
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		Log.Error("MongoDB连接失败: ", zap.Any(ERROR, err))
+		panic(err)
 	}
 
 	// 检查连接
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		Log.Error("MongoDB心跳检测失败: ", zap.Any(ERROR, err))
+		panic(err)
 	}
 
 	MongoClient = client
