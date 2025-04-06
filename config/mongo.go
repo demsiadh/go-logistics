@@ -5,10 +5,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"os"
 	"time"
 )
-
-var MongoClient *mongo.Client
 
 // MongoDBConfig MongoDB配置结构
 type MongoDBConfig struct {
@@ -19,8 +18,8 @@ type MongoDBConfig struct {
 	AuthSource string
 }
 
-// InitMongoDB 初始化MongoDB连接
-func InitMongoDB() {
+// 初始化MongoDB连接
+func initMongoDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cfg := getDefaultConfig()
@@ -55,15 +54,11 @@ func InitMongoDB() {
 
 func getDefaultConfig() (cfg *MongoDBConfig) {
 	cfg = &MongoDBConfig{
-		URI:        "mongodb://logistics:logistics@tccloud:27017",
-		Database:   "logistics",
-		Username:   "logistics",
-		Password:   "logistics",
-		AuthSource: "logistics",
+		URI:        os.Getenv("MONGODB_URI"),
+		Database:   os.Getenv("MONGODB_DATABASE"),
+		Username:   os.Getenv("MONGODB_USERNAME"),
+		Password:   os.Getenv("MONGODB_PASSWORD"),
+		AuthSource: os.Getenv("MONGODB_AUTH_SOURCE"),
 	}
 	return
-}
-
-func init() {
-	InitMongoDB()
 }

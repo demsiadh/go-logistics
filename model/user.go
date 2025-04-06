@@ -18,13 +18,12 @@ type UserStatus int
 
 const (
 	Active UserStatus = iota + 1
-	Inactive
 	Banned
 	Deleted
 )
 
 func (s UserStatus) String() string {
-	return [...]string{"活跃", "不活跃", "禁止", "删除"}[s-1]
+	return [...]string{"活跃", "禁止", "删除"}[s-1]
 }
 
 // User 用户结构

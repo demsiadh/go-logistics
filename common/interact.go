@@ -45,6 +45,14 @@ func ErrorResponse(c *gin.Context, err *ErrorMsg) {
 	})
 }
 
+func AbortResponse(c *gin.Context, err *ErrorMsg) {
+	c.AbortWithStatusJSON(http.StatusOK, Response{
+		Code:    err.Code,
+		Message: err.Message,
+		Data:    nil,
+	})
+}
+
 func (r *Response) String() string {
 	b, err := json.Marshal(r)
 	if err != nil {
@@ -63,8 +71,13 @@ func (e *ErrorMsg) Error() string {
 }
 
 var (
-	ServerError    = &ErrorMsg{Code: 50001, Message: "服务器错误"}
-	ParamError     = &ErrorMsg{Code: 40001, Message: "参数错误"}
-	RecordNotFound = &ErrorMsg{Code: 60001, Message: "记录不存在"}
-	RecordExist    = &ErrorMsg{Code: 60002, Message: "记录已存在"}
+	ServerError             = &ErrorMsg{Code: 50001, Message: "服务器错误"}
+	ParamError              = &ErrorMsg{Code: 40001, Message: "参数错误"}
+	RecordNotFound          = &ErrorMsg{Code: 60001, Message: "记录不存在"}
+	RecordExist             = &ErrorMsg{Code: 60002, Message: "记录已存在"}
+	NotLogin                = &ErrorMsg{Code: 70001, Message: "用户未登录或用户登录凭证已过期"}
+	UserBanned              = &ErrorMsg{Code: 70002, Message: "用户被封禁"}
+	UserDeleted             = &ErrorMsg{Code: 70003, Message: "用户已删除"}
+	UserNameOrPasswordError = &ErrorMsg{Code: 70004, Message: "用户名或密码错误"}
+	TokenError              = &ErrorMsg{Code: 70005, Message: "token错误"}
 )

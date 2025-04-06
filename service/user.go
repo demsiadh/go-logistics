@@ -110,3 +110,37 @@ func DeleteUser(c *gin.Context) {
 	}
 	common.SuccessResponse(c)
 }
+
+// LoginUser 登录用户
+func LoginUser(c *gin.Context) {
+	name := c.Query("name")
+	password := c.Query("password")
+	if name == "" || password == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	user, err := model.GetUserByName(name)
+	if err != nil {
+		common.ErrorResponse(c, common.RecordNotFound)
+		return
+	}
+	if user.Status == model.Banned {
+		common.ErrorResponse(c, common.UserBanned)
+		return
+	}
+	if user.Status == model.Deleted {
+		common.ErrorResponse(c, common.UserDeleted)
+		return
+	}
+	if !util.ValidPassword(password, user.Salt, user.Password) {
+		common.ErrorResponse(c, common.UserNameOrPasswordError)
+	}
+	token, err := util.GenerateToken(user.Name)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	c.Header("logistics_token", token)
+	common.SuccessResponseWithData(c, user)
+	return
+}
