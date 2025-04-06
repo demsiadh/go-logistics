@@ -32,7 +32,7 @@ func NewProductionLogger() *zap.Logger {
 
 // CustomTimeEncoder 自定义时间编码器（带毫秒和时区）
 func CustomTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006-01-02 15:04:05.000 MST"))
+	enc.AppendString(t.Format("2006-01-02 15:04:05.000 CST"))
 }
 
 func initLog() {

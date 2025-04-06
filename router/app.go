@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/gin-contrib/cors"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
@@ -13,11 +14,20 @@ import (
 
 func Router() (server *gin.Engine) {
 	server = gin.New()
+	// 日志中间件
 	server.Use(ginzap.Ginzap(config.Log, time.RFC3339, true))
 	server.Use(ginzap.RecoveryWithZap(config.Log, true))
 
-	// 全局中间件（所有路由都会经过）
-	server.Use(TokenAuthMiddleware())
+	// CORS 配置（严格模式）
+	server.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"}, // 明确指定前端地址
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "Logistics-Custom-Header"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true, // 关键配置
+		MaxAge:           12 * time.Hour,
+	}))
+
 	apiGroup := server.Group("/api")
 	userGroup := apiGroup.Group("/user")
 	{
@@ -26,8 +36,10 @@ func Router() (server *gin.Engine) {
 		userGroup.POST("/list", service.GetUserList)
 		userGroup.PUT("/update", service.UpdateUser)
 		userGroup.DELETE("/delete", service.DeleteUser)
-		userGroup.GET("/login", service.LoginUser)
+		userGroup.POST("/login", service.LoginUser)
 	}
+	// 全局中间件（所有路由都会经过）
+	server.Use(TokenAuthMiddleware())
 	return
 }
 
@@ -40,7 +52,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		currentPath := c.FullPath() // 获取注册的路由路径（非请求URI）
-
+		config.Log.Info("当前请求路径：" + currentPath)
 		// 检查白名单
 		if _, ok := whitelist[currentPath]; ok {
 			c.Next()

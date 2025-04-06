@@ -113,8 +113,8 @@ func DeleteUser(c *gin.Context) {
 
 // LoginUser 登录用户
 func LoginUser(c *gin.Context) {
-	name := c.Query("name")
-	password := c.Query("password")
+	name := c.PostForm("name")
+	password := c.PostForm("password")
 	if name == "" || password == "" {
 		common.ErrorResponse(c, common.ParamError)
 		return
