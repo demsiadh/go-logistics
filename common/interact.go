@@ -79,5 +79,4 @@ var (
 	UserBanned              = &ErrorMsg{Code: 70002, Message: "用户被封禁"}
 	UserDeleted             = &ErrorMsg{Code: 70003, Message: "用户已删除"}
 	UserNameOrPasswordError = &ErrorMsg{Code: 70004, Message: "用户名或密码错误"}
-	TokenError              = &ErrorMsg{Code: 70005, Message: "token错误"}
 )

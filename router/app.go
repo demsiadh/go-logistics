@@ -15,7 +15,7 @@ import (
 func Router() (server *gin.Engine) {
 	server = gin.New()
 	// 日志中间件
-	server.Use(ginzap.Ginzap(config.Log, time.RFC3339, true))
+	server.Use(ginzap.Ginzap(config.Log, "2006-01-02 15:04:05.000 CST", false))
 	server.Use(ginzap.RecoveryWithZap(config.Log, true))
 
 	// CORS 配置（严格模式）
@@ -28,6 +28,9 @@ func Router() (server *gin.Engine) {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// 全局中间件（所有路由都会经过）
+	server.Use(TokenAuthMiddleware())
+
 	apiGroup := server.Group("/api")
 	userGroup := apiGroup.Group("/user")
 	{
@@ -37,9 +40,9 @@ func Router() (server *gin.Engine) {
 		userGroup.PUT("/update", service.UpdateUser)
 		userGroup.DELETE("/delete", service.DeleteUser)
 		userGroup.POST("/login", service.LoginUser)
+		userGroup.GET("/loginStatus", service.GetUserLoginStatus)
 	}
-	// 全局中间件（所有路由都会经过）
-	server.Use(TokenAuthMiddleware())
+
 	return
 }
 
@@ -52,7 +55,6 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		currentPath := c.FullPath() // 获取注册的路由路径（非请求URI）
-		config.Log.Info("当前请求路径：" + currentPath)
 		// 检查白名单
 		if _, ok := whitelist[currentPath]; ok {
 			c.Next()
@@ -67,11 +69,11 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 
 		claims, err := util.CheckToken(token)
 		if err != nil {
-			common.AbortResponse(c, common.TokenError)
+			common.AbortResponse(c, common.NotLogin)
 			return
 		}
 		if claims == nil {
-			common.AbortResponse(c, common.TokenError)
+			common.AbortResponse(c, common.NotLogin)
 			return
 		}
 		name := claims.Name

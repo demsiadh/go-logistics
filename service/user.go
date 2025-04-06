@@ -144,3 +144,13 @@ func LoginUser(c *gin.Context) {
 	common.SuccessResponseWithData(c, user)
 	return
 }
+
+// GetUserLoginStatus 获取用户登录状态
+func GetUserLoginStatus(c *gin.Context) {
+	name := c.GetString("name")
+	if name == "" {
+		common.ErrorResponse(c, common.NotLogin)
+		return
+	}
+	common.SuccessResponseWithData(c, &model.User{Name: name})
+}
