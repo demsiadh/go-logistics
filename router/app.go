@@ -22,8 +22,8 @@ func Router() (server *gin.Engine) {
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"}, // 明确指定前端地址
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization", "Logistics-Custom-Header"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "Logistics-Custom-Header", "logistics_token"},
+		ExposeHeaders:    []string{"Content-Length", "logistics_token"},
 		AllowCredentials: true, // 关键配置
 		MaxAge:           12 * time.Hour,
 	}))
