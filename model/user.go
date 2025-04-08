@@ -29,11 +29,11 @@ func (s UserStatus) String() string {
 // User 用户结构
 type User struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty" json:"-"`
-	Name       string             `bson:"name"`
-	Phone      string             `bson:"phone"`
-	Email      string             `bson:"email"`
+	Name       string             `bson:"name" json:"name"`
+	Phone      string             `bson:"phone" json:"phone"`
+	Email      string             `bson:"email" json:"email"`
 	Password   string             `bson:"password" json:"-"`
-	Status     UserStatus         `bson:"status"`
+	Status     UserStatus         `bson:"status" json:"status"`
 	Salt       string             `bson:"salt" json:"-"`
 	CreateTime primitive.DateTime `bson:"createTime" json:"-"`
 	UpdateTime primitive.DateTime `bson:"updateTime" json:"-"`
