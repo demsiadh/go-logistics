@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
 	"go_logistics/config"
-	"go_logistics/model"
+	"go_logistics/model/entity"
 	"go_logistics/service"
 	"go_logistics/util"
 	"time"
@@ -77,16 +77,16 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		name := claims.Name
-		user, err := model.GetUserByName(name)
+		user, err := entity.GetUserByName(name)
 		if err != nil {
 			common.AbortResponse(c, common.RecordNotFound)
 			return
 		}
-		if user.Status == model.Banned {
+		if user.Status == entity.Banned {
 			common.AbortResponse(c, common.UserBanned)
 			return
 		}
-		if user.Status == model.Deleted {
+		if user.Status == entity.Deleted {
 			common.AbortResponse(c, common.UserDeleted)
 			return
 		}

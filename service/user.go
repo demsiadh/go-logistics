@@ -3,7 +3,8 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
-	"go_logistics/model"
+	"go_logistics/model/entity"
+	"go_logistics/model/vo"
 	"go_logistics/util"
 	"strconv"
 )
@@ -11,12 +12,12 @@ import (
 // GetUserByName 获取用户信息
 func GetUserByName(c *gin.Context) {
 	name := c.Query("name")
-	user, err := model.GetUserByName(name)
+	user, err := entity.GetUserByName(name)
 	if err != nil {
 		common.ErrorResponse(c, common.RecordNotFound)
 		return
 	}
-	common.SuccessResponseWithData(c, user)
+	common.SuccessResponseWithData(c, vo.ToUserVO(user))
 }
 
 // CreateUser 创建用户
@@ -30,20 +31,20 @@ func CreateUser(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	user, _ := model.GetUserByName(name)
+	user, _ := entity.GetUserByName(name)
 	if user.Status != 0 {
 		common.ErrorResponse(c, common.RecordExist)
 		return
 	}
-	user = &model.User{}
+	user = &entity.User{}
 	user.Name = name
 	user.Phone = phone
 	user.Email = email
 	user.Salt = util.MakeSalt()
 	password = util.MakePassword(password, user.Salt)
 	user.Password = password
-	user.Status = model.Active
-	err := model.InsertUser(user)
+	user.Status = entity.Active
+	err := entity.InsertUser(user)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return
@@ -53,17 +54,17 @@ func CreateUser(c *gin.Context) {
 
 // GetUserList 获取用户列表
 func GetUserList(c *gin.Context) {
-	var dto model.FindUserListDTO
+	var dto entity.FindUserListDTO
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	users, err := model.GetUserList(dto)
+	users, err := entity.GetUserList(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return
 	}
-	common.SuccessResponseWithData(c, users)
+	common.SuccessResponseWithData(c, vo.ToUserVOList(users))
 }
 
 // UpdateUser 更新用户信息
@@ -76,7 +77,7 @@ func UpdateUser(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	user, err := model.GetUserByName(name)
+	user, err := entity.GetUserByName(name)
 	if err != nil {
 		common.ErrorResponse(c, common.RecordNotFound)
 	}
@@ -87,8 +88,8 @@ func UpdateUser(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	user.Status = model.UserStatus(statusInt)
-	err = model.UpdateUser(user)
+	user.Status = entity.UserStatus(statusInt)
+	err = entity.UpdateUser(user)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return
@@ -103,7 +104,7 @@ func DeleteUser(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	err := model.DeleteUser(name)
+	err := entity.DeleteUser(name)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return
@@ -119,16 +120,16 @@ func LoginUser(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	user, err := model.GetUserByName(name)
+	user, err := entity.GetUserByName(name)
 	if err != nil {
 		common.ErrorResponse(c, common.RecordNotFound)
 		return
 	}
-	if user.Status == model.Banned {
+	if user.Status == entity.Banned {
 		common.ErrorResponse(c, common.UserBanned)
 		return
 	}
-	if user.Status == model.Deleted {
+	if user.Status == entity.Deleted {
 		common.ErrorResponse(c, common.UserDeleted)
 		return
 	}
@@ -141,7 +142,7 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 	c.Header("logistics_token", token)
-	common.SuccessResponseWithData(c, user)
+	common.SuccessResponseWithData(c, vo.ToUserVO(user))
 	return
 }
 
@@ -152,5 +153,5 @@ func GetUserLoginStatus(c *gin.Context) {
 		common.ErrorResponse(c, common.NotLogin)
 		return
 	}
-	common.SuccessResponseWithData(c, &model.User{Name: name})
+	common.SuccessResponseWithData(c, &entity.User{Name: name})
 }
