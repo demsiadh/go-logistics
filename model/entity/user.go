@@ -132,3 +132,12 @@ func GetUserList(dto FindUserListDTO) (users []*User, err error) {
 	}
 	return users, nil
 }
+
+// GetTotalCount 获取用户总数
+func GetTotalCount() (count int64, err error) {
+	documents, err := UserCollection.CountDocuments(context.Background(), bson.M{})
+	if err != nil {
+		return
+	}
+	return documents, nil
+}

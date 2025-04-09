@@ -41,6 +41,7 @@ func Router() (server *gin.Engine) {
 		userGroup.DELETE("/delete", service.DeleteUser)
 		userGroup.POST("/login", service.LoginUser)
 		userGroup.GET("/loginStatus", service.GetUserLoginStatus)
+		userGroup.GET("/total", service.GetTotalCount)
 	}
 
 	return

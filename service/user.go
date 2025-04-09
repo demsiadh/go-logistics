@@ -155,3 +155,12 @@ func GetUserLoginStatus(c *gin.Context) {
 	}
 	common.SuccessResponseWithData(c, &entity.User{Name: name})
 }
+
+func GetTotalCount(c *gin.Context) {
+	totalCount, err := entity.GetTotalCount()
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponseWithData(c, totalCount)
+}
