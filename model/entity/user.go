@@ -48,6 +48,10 @@ type FindUserListDTO struct {
 	Page   common.Page `json:"page"`
 }
 
+func (dto *FindUserListDTO) String() string {
+	return fmt.Sprintf("name: %s, phone: %s, email: %s, status: %d, page: %s", dto.Name, dto.Phone, dto.Email, dto.Status, dto.Page.String())
+}
+
 // InsertUser 新建用户
 func InsertUser(user *User) error {
 	// 填充时间
