@@ -51,6 +51,15 @@ func Router() (server *gin.Engine) {
 		orderGroup.PUT("/update", service.UpdateOrder)
 		orderGroup.DELETE("/delete", service.DeleteOrder)
 	}
+	outletGroup := apiGroup.Group("/outlet")
+	{
+		outletGroup.POST("/create", service.CreateOutlet)
+		outletGroup.POST("/list", service.GetOutletList)
+		outletGroup.GET("/total", service.GetOutletTotalCount)
+		outletGroup.PUT("/update", service.UpdateOutlet)
+		outletGroup.DELETE("/delete", service.DeleteOutlet)
+		outletGroup.GET("/allProvincesAndCities", service.GetAllProvincesAndCities)
+	}
 
 	return
 }

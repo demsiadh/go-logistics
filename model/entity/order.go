@@ -36,7 +36,7 @@ func (s OrderStatus) String() string {
 
 // Order 订单结构
 type Order struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"-"`
 	OrderID      string             `bson:"orderId" json:"orderId"`
 	CustomerName string             `bson:"customerName" json:"customerName"`
 	Phone        string             `bson:"phone" json:"phone"`
@@ -60,14 +60,6 @@ type FindOrderListDTO struct {
 func (dto *FindOrderListDTO) String() string {
 	return fmt.Sprintf("orderId: %s, phone: %s, status: %d, startTime: %s, endTime: %s, page: %s",
 		dto.OrderID, dto.Phone, dto.Status, dto.StartTime, dto.EndTime, dto.Page.String())
-}
-
-// GetOrderById 根据id获取订单信息
-func GetOrderById(orderId string) (*Order, error) {
-	var order *Order
-	filter := bson.M{"orderId": orderId}
-	err := OrderCollection.FindOne(context.Background(), filter).Decode(order)
-	return order, err
 }
 
 // InsertOrder 新建订单
@@ -96,7 +88,7 @@ func UpdateOrder(order *Order) error {
 	return err
 }
 
-// DeleteOrder 删除订单（逻辑删除）
+// DeleteOrder 删除订单
 func DeleteOrder(orderId string) error {
 	filter := bson.M{"orderId": orderId}
 	_, err := OrderCollection.DeleteOne(context.Background(), filter)
