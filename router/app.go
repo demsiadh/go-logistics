@@ -43,6 +43,14 @@ func Router() (server *gin.Engine) {
 		userGroup.GET("/loginStatus", service.GetUserLoginStatus)
 		userGroup.GET("/total", service.GetTotalCount)
 	}
+	orderGroup := apiGroup.Group("/order")
+	{
+		orderGroup.POST("/create", service.CreateOrder)
+		orderGroup.POST("/list", service.GetOrderList)
+		orderGroup.GET("/total", service.GetOrderTotalCount)
+		orderGroup.PUT("/update", service.UpdateOrder)
+		orderGroup.DELETE("/delete", service.DeleteOrder)
+	}
 
 	return
 }
