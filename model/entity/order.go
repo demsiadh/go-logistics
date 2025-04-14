@@ -99,11 +99,11 @@ func DeleteOrder(orderId string) error {
 func GetOrderList(dto FindOrderListDTO) (orders []*Order, err error) {
 	filter := bson.M{}
 	if dto.OrderID != "" {
-		filter["orderId"] = bson.M{"$regex": "^" + dto.OrderID, "$options": "i"}
+		filter["orderId"] = bson.M{"$regex": dto.OrderID, "$options": "i"}
 	}
 
 	if dto.Phone != "" {
-		filter["phone"] = bson.M{"$regex": "^" + dto.Phone, "$options": "i"}
+		filter["phone"] = bson.M{"$regex": dto.Phone, "$options": "i"}
 	}
 	if dto.Status != 0 {
 		filter["status"] = dto.Status

@@ -103,13 +103,13 @@ func GetUserByName(name string) (*User, error) {
 func GetUserList(dto FindUserListDTO) (users []*User, err error) {
 	filter := bson.M{}
 	if dto.Name != "" {
-		filter["name"] = bson.M{"$regex": "^" + dto.Name, "$options": "i"}
+		filter["name"] = bson.M{"$regex": dto.Name, "$options": "i"}
 	}
 	if dto.Phone != "" {
-		filter["phone"] = bson.M{"$regex": "^" + dto.Phone, "$options": "i"}
+		filter["phone"] = bson.M{"$regex": dto.Phone, "$options": "i"}
 	}
 	if dto.Email != "" {
-		filter["email"] = bson.M{"$regex": "^" + dto.Email, "$options": "i"}
+		filter["email"] = bson.M{"$regex": dto.Email, "$options": "i"}
 	}
 	if dto.Status != 0 {
 		filter["status"] = dto.Status

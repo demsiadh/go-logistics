@@ -115,13 +115,13 @@ func DeleteOutlet(outletId string) error {
 func GetOutletList(dto FindOutletListDTO) (outlets []*Outlet, err error) {
 	filter := bson.M{}
 	if dto.Name != "" {
-		filter["name"] = bson.M{"$regex": "^" + dto.Name, "$options": "i"}
+		filter["name"] = bson.M{"$regex": dto.Name, "$options": "i"}
 	}
 	if dto.Province != "" {
-		filter["province"] = bson.M{"$regex": "^" + dto.Province, "$options": "i"}
+		filter["province"] = bson.M{"$regex": dto.Province, "$options": "i"}
 	}
 	if dto.City != "" {
-		filter["city"] = bson.M{"$regex": "^" + dto.City, "$options": "i"}
+		filter["city"] = bson.M{"$regex": dto.City, "$options": "i"}
 	}
 	if dto.Status != 0 {
 		filter["status"] = dto.Status

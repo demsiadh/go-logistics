@@ -60,6 +60,14 @@ func Router() (server *gin.Engine) {
 		outletGroup.DELETE("/delete", service.DeleteOutlet)
 		outletGroup.GET("/allProvincesAndCities", service.GetAllProvincesAndCities)
 	}
+	routeGroup := apiGroup.Group("/route")
+	{
+		routeGroup.POST("/create", service.CreateRoute)
+		routeGroup.POST("/list", service.GetRouteList)
+		routeGroup.GET("/total", service.GetRouteTotalCount)
+		routeGroup.PUT("/update", service.UpdateRoute)
+		routeGroup.DELETE("/delete", service.DeleteRoute)
+	}
 
 	return
 }
