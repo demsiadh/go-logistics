@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
 	"go_logistics/common"
 	"go_logistics/model/entity"
 	"strconv"
 )
-
-const baiduMapAK = "SBG5d7X8VNM0nlfBfIjRXWvJ01LAR3Bg" // 替换为你的百度地图API Key
 
 // CreateRoute 创建线路
 func CreateRoute(c *gin.Context) {
@@ -22,7 +19,10 @@ func CreateRoute(c *gin.Context) {
 	statusInt, err := strconv.Atoi(status)
 	description := c.PostForm("description")
 	pointsStr := c.PostForm("points")
-	if name == "" || routeType == "" || typeInt == 0 || statusInt == 0 || description == "" || pointsStr == "" || err != nil {
+	distance := c.PostForm("distance")
+	distanceFloat, err := strconv.ParseFloat(distance, 64)
+	if name == "" || routeType == "" || status == "" || description == "" || pointsStr == "" || distance == "" || err != nil {
+		fmt.Println(name, routeType, status, description, pointsStr, distance, err)
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -33,11 +33,6 @@ func CreateRoute(c *gin.Context) {
 	}
 	if len(points) < 2 {
 		common.ErrorResponse(c, common.ParamError)
-		return
-	}
-	distance, err := calculateDistance(points)
-	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
 		return
 	}
 	// 使用雪花算法生成16位的线路ID
@@ -55,7 +50,7 @@ func CreateRoute(c *gin.Context) {
 		Status:      entity.RouteStatus(statusInt),
 		Description: description,
 		Points:      points,
-		Distance:    distance,
+		Distance:    distanceFloat,
 	}
 	err = entity.InsertRoute(route)
 	if err != nil {
@@ -75,7 +70,9 @@ func UpdateRoute(c *gin.Context) {
 	statusInt, err := strconv.Atoi(status)
 	description := c.PostForm("description")
 	pointsStr := c.PostForm("points")
-	if routeId == "" || name == "" || routeType == "" || typeInt == 0 || statusInt == 0 || description == "" || pointsStr == "" || err != nil {
+	distance := c.PostForm("distance")
+	distanceFloat, err := strconv.ParseFloat(distance, 64)
+	if routeId == "" || name == "" || routeType == "" || typeInt == 0 || statusInt == 0 || description == "" || pointsStr == "" || distance == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -88,11 +85,6 @@ func UpdateRoute(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	distance, err := calculateDistance(points)
-	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
-		return
-	}
 	route := &entity.Route{
 		RouteID:     routeId,
 		Name:        name,
@@ -100,7 +92,7 @@ func UpdateRoute(c *gin.Context) {
 		Status:      entity.RouteStatus(statusInt),
 		Description: description,
 		Points:      points,
-		Distance:    distance,
+		Distance:    distanceFloat,
 	}
 	err = entity.UpdateRoute(route)
 	if err != nil {
@@ -148,47 +140,4 @@ func GetRouteTotalCount(c *gin.Context) {
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
-}
-
-// calculateDistance 计算点位之间的距离
-func calculateDistance(points []entity.GeoPoint) (float64, error) {
-	client := resty.New()
-	var origins, destinations string
-	for i, point := range points {
-		if i > 0 {
-			origins += "|"
-			destinations += "|"
-		}
-		origins += fmt.Sprintf("%f,%f", point.Coordinates[1], point.Coordinates[0])
-		destinations += fmt.Sprintf("%f,%f", point.Coordinates[1], point.Coordinates[0])
-	}
-
-	resp, err := client.R().
-		SetQueryParams(map[string]string{
-			"origins":      origins,
-			"destinations": destinations,
-			"ak":           baiduMapAK,
-		}).
-		Get("http://api.map.baidu.com/routematrix/v2/driving")
-	if err != nil {
-		return 0, err
-	}
-
-	var result struct {
-		Result []struct {
-			Distance struct {
-				Value int `json:"value"`
-			} `json:"distance"`
-		} `json:"result"`
-	}
-	if err := json.Unmarshal(resp.Body(), &result); err != nil {
-		return 0, err
-	}
-
-	var totalDistance float64
-	for _, r := range result.Result {
-		totalDistance += float64(r.Distance.Value) / 1000 // 转换为公里
-	}
-
-	return totalDistance, nil
 }
