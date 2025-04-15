@@ -73,7 +73,6 @@ func UpdateOutlet(outletId string, outlet *Outlet) error {
 
 	// 构建过滤条件
 	filter := bson.M{"_id": objectId}
-	fmt.Println("filter:", filter)
 	update := bson.M{
 		"$set": bson.M{
 			"name":          outlet.Name,

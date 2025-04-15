@@ -109,7 +109,6 @@ func UpdateRoute(route *Route) error {
 func DeleteRoute(routeId string) error {
 	// 构建过滤条件
 	filter := bson.M{"routeId": routeId}
-
 	// 执行删除操作
 	_, err := RouteCollection.DeleteOne(context.Background(), filter)
 	if err != nil {

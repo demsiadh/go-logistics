@@ -25,7 +25,7 @@ func SuccessResponse(c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
 		Message: "success",
-		Data:    nil,
+		Data:    make([]int, 0),
 	})
 }
 
@@ -41,7 +41,7 @@ func ErrorResponse(c *gin.Context, err *ErrorMsg) {
 	c.JSON(http.StatusOK, Response{
 		Code:    err.Code,
 		Message: err.Message,
-		Data:    nil,
+		Data:    make([]int, 0),
 	})
 }
 
@@ -49,7 +49,7 @@ func AbortResponse(c *gin.Context, err *ErrorMsg) {
 	c.AbortWithStatusJSON(http.StatusOK, Response{
 		Code:    err.Code,
 		Message: err.Message,
-		Data:    nil,
+		Data:    make([]int, 0),
 	})
 }
 
