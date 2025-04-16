@@ -107,10 +107,20 @@ func UpdateRoute(route *Route) error {
 
 // DeleteRoute 删除线路
 func DeleteRoute(routeId string) error {
+	vehicles, err := GetVehicleList(FindVehicleListDTO{
+		RouteID: routeId,
+	})
+	if err != nil {
+		return err
+	}
+	if len(vehicles) > 0 {
+		return fmt.Errorf("当前线路存在关联车辆")
+	}
+
 	// 构建过滤条件
 	filter := bson.M{"routeId": routeId}
 	// 执行删除操作
-	_, err := RouteCollection.DeleteOne(context.Background(), filter)
+	_, err = RouteCollection.DeleteOne(context.Background(), filter)
 	if err != nil {
 		return err
 	}

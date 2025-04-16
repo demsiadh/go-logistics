@@ -69,6 +69,15 @@ func Router() (server *gin.Engine) {
 		routeGroup.DELETE("/delete", service.DeleteRoute)
 	}
 
+	vehicleGroup := apiGroup.Group("/vehicle")
+	{
+		vehicleGroup.POST("/create", service.CreateVehicle)
+		vehicleGroup.POST("/list", service.GetVehicleList)
+		vehicleGroup.GET("/total", service.GetVehicleTotalCount)
+		vehicleGroup.PUT("/update", service.UpdateVehicle)
+		vehicleGroup.DELETE("/delete", service.DeleteVehicle)
+	}
+
 	return
 }
 
