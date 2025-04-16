@@ -21,7 +21,7 @@ func CreateRoute(c *gin.Context) {
 	pointsStr := c.PostForm("points")
 	distance := c.PostForm("distance")
 	distanceFloat, err := strconv.ParseFloat(distance, 64)
-	if name == "" || routeType == "" || status == "" || description == "" || pointsStr == "" || distance == "" || err != nil {
+	if name == "" || routeType == "" || status == "" || pointsStr == "" || distance == "" || err != nil {
 		fmt.Println(name, routeType, status, description, pointsStr, distance, err)
 		common.ErrorResponse(c, common.ParamError)
 		return

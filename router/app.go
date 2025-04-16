@@ -77,6 +77,17 @@ func Router() (server *gin.Engine) {
 		vehicleGroup.PUT("/update", service.UpdateVehicle)
 		vehicleGroup.DELETE("/delete", service.DeleteVehicle)
 	}
+	homeGroup := apiGroup.Group("/home")
+	{
+		homeGroup.GET("/outlet", service.GetOutletView)
+		homeGroup.GET("/order", service.GetOrderView)
+		homeGroup.GET("/vehicle", service.GetVehicleView)
+		homeGroup.GET("/route", service.GetRouteView)
+	}
+	generateGroup := apiGroup.Group("/generate")
+	{
+		generateGroup.GET("/vehicle", service.GenerateVehicles)
+	}
 
 	return
 }
