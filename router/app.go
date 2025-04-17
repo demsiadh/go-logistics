@@ -88,6 +88,10 @@ func Router() (server *gin.Engine) {
 	{
 		generateGroup.GET("/vehicle", service.GenerateVehicles)
 	}
+	llmGroup := apiGroup.Group("/llm")
+	{
+		llmGroup.GET("chat", service.ChatLLM)
+	}
 
 	return
 }
@@ -107,7 +111,12 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		token := c.GetHeader("logistics_token")
+		var token string
+		if currentPath == "/api/llm/chat" {
+			token = c.Query("logistics_token")
+		} else {
+			token = c.GetHeader("logistics_token")
+		}
 		if token == "" {
 			common.AbortResponse(c, common.NotLogin)
 			return
