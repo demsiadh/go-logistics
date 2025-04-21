@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	easyllm "github.com/soryetong/go-easy-llm"
@@ -29,6 +28,7 @@ type WSMessage struct {
 }
 
 type UserInput struct {
+	Model   string `json:"model"`
 	Message string `json:"message"`
 }
 
@@ -66,12 +66,9 @@ func handleWebSocket(conn *websocket.Conn, client *easyllm.ChatClient) error {
 		return err
 	}
 
-	presetPrompt := "你是一个物流管理系统的客服助手，可以处理以下功能：\n1. 订单管理：查询订单状态、跟踪订单状态。\n2. 用户管理：管理用户账号。\n3. 车辆管理：查询车辆信息。\n4. 线路管理：管理运输线路。\n5. 营业网点管理：查询网点信息。\n请根据用户的问题提供专业解答。"
-	fullMessage := fmt.Sprintf("%s\n%s", presetPrompt, input.Message)
-
 	resp, err := client.StreamChat(context.Background(), &chatmodule.ChatRequest{
-		Model:   "hunyuan-lite",
-		Message: fullMessage,
+		Model:   input.Model,
+		Message: input.Message,
 	})
 	if err != nil {
 		config.Log.Info("Model call failed:")
