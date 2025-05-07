@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
 	"go_logistics/config"
@@ -21,11 +22,23 @@ func CreateOutlet(c *gin.Context) {
 	remark := c.PostForm("remark")
 	lng := c.PostForm("lng")
 	lat := c.PostForm("lat")
-	if name == "" || phone == "" || province == "" || city == "" || detailAddress == "" ||
+	scopeStr := c.PostForm("scope")
+	if name == "" || phone == "" || province == "" || city == "" || scopeStr == "" || detailAddress == "" ||
 		businessHours == "" || status == "" || lng == "" || lat == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
+
+	var scope []common.GeoPoint
+	if err := json.Unmarshal([]byte(scopeStr), &scope); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	if len(scope) <= 2 {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+
 	outlet := &entity.Outlet{
 		Name:          name,
 		Phone:         phone,
@@ -37,6 +50,7 @@ func CreateOutlet(c *gin.Context) {
 		Remark:        remark,
 		Lng:           lng,
 		Lat:           lat,
+		Scope:         scope,
 	}
 	err = entity.InsertOutlet(outlet)
 	if err != nil {
@@ -73,10 +87,24 @@ func UpdateOutlet(c *gin.Context) {
 	remark := c.PostForm("remark")
 	lng := c.PostForm("lng")
 	lat := c.PostForm("lat")
-	if name == "" || phone == "" || detailAddress == "" || businessHours == "" || status == "" || lng == "" || lat == "" || err != nil {
+	scopeStr := c.PostForm("scope")
+	if name == "" || phone == "" || detailAddress == "" ||
+		businessHours == "" || status == "" || lng == "" ||
+		lat == "" || scopeStr == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
+
+	var scope []common.GeoPoint
+	if err := json.Unmarshal([]byte(scopeStr), &scope); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	if len(scope) <= 2 {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+
 	// 构建过滤条件
 	outlet := &entity.Outlet{
 		Name:          name,
@@ -87,6 +115,7 @@ func UpdateOutlet(c *gin.Context) {
 		Remark:        remark,
 		Lng:           lng,
 		Lat:           lat,
+		Scope:         scope,
 	}
 	err = entity.UpdateOutlet(outletId, outlet)
 	if err != nil {

@@ -37,12 +37,6 @@ func (s RouteType) String() string {
 	return [...]string{"常规路线", "快速路线", "特殊路线"}[s-1]
 }
 
-// GeoPoint 表示一个使用 GeoJSON 格式的坐标点。
-type GeoPoint struct {
-	Type        string    `bson:"type"`        // 类型，固定为 "Point"
-	Coordinates []float64 `bson:"coordinates"` // 坐标，包含经度和纬度
-}
-
 // Route 表示一个线路，包含各种属性。
 type Route struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
@@ -51,7 +45,7 @@ type Route struct {
 	Type        RouteType          `bson:"type" json:"type"`
 	Status      RouteStatus        `bson:"status" json:"status"`
 	Description string             `bson:"description" json:"description"`
-	Points      []GeoPoint         `bson:"points" json:"points"`     // 线路点位的坐标，采用 GeoJSON 格式
+	Points      []common.GeoPoint  `bson:"points" json:"points"`     // 线路点位的坐标，采用 GeoJSON 格式
 	Distance    float64            `bson:"distance" json:"distance"` // 线路总里程，单位为公里
 	CreateTime  primitive.DateTime `bson:"createTime" json:"-"`
 	UpdateTime  primitive.DateTime `bson:"updateTime" json:"-"`

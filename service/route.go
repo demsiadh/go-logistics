@@ -26,7 +26,7 @@ func CreateRoute(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	var points []entity.GeoPoint
+	var points []common.GeoPoint
 	if err := json.Unmarshal([]byte(pointsStr), &points); err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
@@ -76,7 +76,7 @@ func UpdateRoute(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	var points []entity.GeoPoint
+	var points []common.GeoPoint
 	if err := json.Unmarshal([]byte(pointsStr), &points); err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return

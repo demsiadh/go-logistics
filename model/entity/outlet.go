@@ -35,6 +35,7 @@ type Outlet struct {
 	BusinessHours string             `bson:"businessHours" json:"businessHours"`
 	Lng           string             `bson:"lng" json:"lng"`
 	Lat           string             `bson:"lat" json:"lat"`
+	Scope         []common.GeoPoint  `bson:"scope" json:"scope"`
 	Status        OutletStatus       `bson:"status" json:"status"`
 	Remark        string             `bson:"remark" json:"remark"`
 	CreateTime    primitive.DateTime `bson:"createTime" json:"-"`
@@ -81,6 +82,7 @@ func UpdateOutlet(outletId string, outlet *Outlet) error {
 			"businessHours": outlet.BusinessHours,
 			"lng":           outlet.Lng,
 			"lat":           outlet.Lat,
+			"scope":         outlet.Scope,
 			"status":        outlet.Status,
 			"remark":        outlet.Remark,
 			"updateTime":    util.GetMongoTimeNow(),
