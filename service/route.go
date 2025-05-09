@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
 	"go_logistics/model/entity"
+	"go_logistics/model/vo"
 	"strconv"
 )
 
@@ -21,7 +22,10 @@ func CreateRoute(c *gin.Context) {
 	pointsStr := c.PostForm("points")
 	distance := c.PostForm("distance")
 	distanceFloat, err := strconv.ParseFloat(distance, 64)
-	if name == "" || routeType == "" || status == "" || pointsStr == "" || distance == "" || err != nil {
+	startOutlet := c.PostForm("startOutlet")
+	endOutlet := c.PostForm("endOutlet")
+	if name == "" || routeType == "" || status == "" || pointsStr == "" ||
+		distance == "" || startOutlet != "" || endOutlet != "" || err != nil {
 		fmt.Println(name, routeType, status, description, pointsStr, distance, err)
 		common.ErrorResponse(c, common.ParamError)
 		return
@@ -51,6 +55,8 @@ func CreateRoute(c *gin.Context) {
 		Description: description,
 		Points:      points,
 		Distance:    distanceFloat,
+		StartOutlet: startOutlet,
+		EndOutlet:   endOutlet,
 	}
 	err = entity.InsertRoute(route)
 	if err != nil {
@@ -72,7 +78,11 @@ func UpdateRoute(c *gin.Context) {
 	pointsStr := c.PostForm("points")
 	distance := c.PostForm("distance")
 	distanceFloat, err := strconv.ParseFloat(distance, 64)
-	if routeId == "" || name == "" || routeType == "" || typeInt == 0 || statusInt == 0 || description == "" || pointsStr == "" || distance == "" || err != nil {
+	startOutlet := c.PostForm("startOutlet")
+	endOutlet := c.PostForm("endOutlet")
+	if routeId == "" || name == "" || routeType == "" || typeInt == 0 ||
+		statusInt == 0 || description == "" || pointsStr == "" || distance == "" ||
+		startOutlet != "" || endOutlet != "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -114,7 +124,12 @@ func GetRouteList(c *gin.Context) {
 		common.ErrorResponse(c, common.ServerError)
 		return
 	}
-	common.SuccessResponseWithData(c, routes)
+	routeVOs, err := vo.ToRouteVOList(routes)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponseWithData(c, routeVOs)
 }
 
 // DeleteRoute 删除线路

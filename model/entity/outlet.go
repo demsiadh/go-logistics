@@ -151,7 +151,7 @@ func GetOutletList(dto FindOutletListDTO) (outlets []*Outlet, err error) {
 	return outlets, nil
 }
 
-// GetOutletTotalCount 获取用户总数
+// GetOutletTotalCount 获取总数
 func GetOutletTotalCount() (count int64, err error) {
 	documents, err := OutletCollection.CountDocuments(context.Background(), bson.M{})
 	if err != nil {
@@ -211,4 +211,11 @@ func GetAllProvincesAndCities() (result map[string][]string, err error) {
 	}
 
 	return result, nil
+}
+
+func GetOutletById(outletId string) (outlet *Outlet, err error) {
+	var objectId, _ = primitive.ObjectIDFromHex(outletId)
+	filter := bson.M{"_id": objectId}
+	err = OutletCollection.FindOne(context.Background(), filter).Decode(&outlet)
+	return
 }

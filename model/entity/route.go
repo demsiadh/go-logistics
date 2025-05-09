@@ -47,6 +47,8 @@ type Route struct {
 	Description string             `bson:"description" json:"description"`
 	Points      []common.GeoPoint  `bson:"points" json:"points"`     // 线路点位的坐标，采用 GeoJSON 格式
 	Distance    float64            `bson:"distance" json:"distance"` // 线路总里程，单位为公里
+	StartOutlet string             `bson:"startOutlet" json:"startOutlet"`
+	EndOutlet   string             `bson:"endOutlet" json:"endOutlet"`
 	CreateTime  primitive.DateTime `bson:"createTime" json:"-"`
 	UpdateTime  primitive.DateTime `bson:"updateTime" json:"-"`
 }
@@ -92,6 +94,8 @@ func UpdateRoute(route *Route) error {
 			"points":      route.Points,
 			"distance":    route.Distance,
 			"status":      route.Status,
+			"startOutlet": route.StartOutlet,
+			"endOutlet":   route.EndOutlet,
 			"updateTime":  util.GetMongoTimeNow(),
 		},
 	}

@@ -160,3 +160,17 @@ func GetAllProvincesAndCities(c *gin.Context) {
 	}
 	common.SuccessResponseWithData(c, result)
 }
+
+func GetOutletById(c *gin.Context) {
+	outletId := c.Query("outletId")
+	if outletId == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	outlet, err := entity.GetOutletById(outletId)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponseWithData(c, outlet)
+}
