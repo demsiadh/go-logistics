@@ -161,7 +161,7 @@ func GetVehicleList(dto FindVehicleListDTO) (vehicles []*Vehicle, err error) {
 	findOptions := options.Find()
 	findOptions.SetSkip(int64((dto.Page.Skip - 1) * dto.Page.Limit))
 	findOptions.SetLimit(int64(dto.Page.Limit))
-	findOptions.SetSort(bson.M{"plateNumber": 1})
+	findOptions.SetSort(bson.M{"updateTime": -1})
 
 	cursor, err := VehicleCollection.Find(context.Background(), filter, findOptions)
 	if err != nil {

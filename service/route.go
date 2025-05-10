@@ -25,7 +25,7 @@ func CreateRoute(c *gin.Context) {
 	startOutlet := c.PostForm("startOutlet")
 	endOutlet := c.PostForm("endOutlet")
 	if name == "" || routeType == "" || status == "" || pointsStr == "" ||
-		distance == "" || startOutlet != "" || endOutlet != "" || err != nil {
+		distance == "" || startOutlet == "" || endOutlet == "" || err != nil {
 		fmt.Println(name, routeType, status, description, pointsStr, distance, err)
 		common.ErrorResponse(c, common.ParamError)
 		return
@@ -82,7 +82,7 @@ func UpdateRoute(c *gin.Context) {
 	endOutlet := c.PostForm("endOutlet")
 	if routeId == "" || name == "" || routeType == "" || typeInt == 0 ||
 		statusInt == 0 || description == "" || pointsStr == "" || distance == "" ||
-		startOutlet != "" || endOutlet != "" || err != nil {
+		startOutlet == "" || endOutlet == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -103,6 +103,8 @@ func UpdateRoute(c *gin.Context) {
 		Description: description,
 		Points:      points,
 		Distance:    distanceFloat,
+		StartOutlet: startOutlet,
+		EndOutlet:   endOutlet,
 	}
 	err = entity.UpdateRoute(route)
 	if err != nil {

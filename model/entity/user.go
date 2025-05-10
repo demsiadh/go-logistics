@@ -117,7 +117,7 @@ func GetUserList(dto FindUserListDTO) (users []*User, err error) {
 	findOptions := options.Find()
 	findOptions.SetSkip(int64((dto.Page.Skip - 1) * dto.Page.Limit))
 	findOptions.SetLimit(int64(dto.Page.Limit))
-	findOptions.SetSort(bson.M{"name": 1})
+	findOptions.SetSort(bson.M{"updateTime": -1})
 
 	cursor, err := UserCollection.Find(context.Background(), filter, findOptions)
 	if err != nil {

@@ -122,7 +122,7 @@ func GetOrderList(dto FindOrderListDTO) (orders []*Order, err error) {
 	findOptions := options.Find()
 	findOptions.SetSkip(int64((dto.Page.Skip - 1) * dto.Page.Limit))
 	findOptions.SetLimit(int64(dto.Page.Limit))
-	findOptions.SetSort(bson.M{"orderId": 1})
+	findOptions.SetSort(bson.M{"updateTime": -1})
 
 	cursor, err := OrderCollection.Find(context.Background(), filter, findOptions)
 	if err != nil {
