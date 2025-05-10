@@ -17,3 +17,10 @@ type GeoPoint struct {
 	Type        string    `bson:"type"`        // 类型，固定为 "Point"
 	Coordinates []float64 `bson:"coordinates"` // 坐标，包含经度和纬度
 }
+
+type BaiduDistanceResponse struct {
+	Status int `json:"status"`
+	Result struct {
+		Distance []float64 `json:"distance"`
+	} `json:"result"`
+}

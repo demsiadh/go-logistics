@@ -149,6 +149,7 @@ func UpdateVehicle(vehicle *Vehicle) error {
 			"remarks":      vehicle.Remarks,
 			"lng":          vehicle.Lng,
 			"lat":          vehicle.Lat,
+			"currentLoad":  vehicle.CurrentLoad,
 			"updateTime":   now,
 		},
 	}
@@ -236,4 +237,33 @@ func GetVehicleTotalCount(dto FindVehicleListDTO) (count int64, err error) {
 		return
 	}
 	return documents, nil
+}
+
+// GetVehicleByRouteId 根据线路ID获取车辆列表（空闲车辆）
+func GetVehicleByRouteId(routeId string) (vehicles []*Vehicle, err error) {
+	filter := bson.M{}
+	filter["routeId"] = routeId
+	filter["status"] = Free
+	cursor, err := VehicleCollection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var vehicle Vehicle
+		if err := cursor.Decode(&vehicle); err != nil {
+			return nil, err
+		}
+		vehicles = append(vehicles, &vehicle)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return vehicles, nil
+}
+
+func GetVehicleById(plateNumber string) (vehicle *Vehicle, err error) {
+	filter := bson.M{"plateNumber": plateNumber}
+	err = VehicleCollection.FindOne(context.Background(), filter).Decode(&vehicle)
+	return
 }

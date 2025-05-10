@@ -36,15 +36,24 @@ func (s OrderStatus) String() string {
 
 // Order 订单结构
 type Order struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"-"`
-	OrderID      string             `bson:"orderId" json:"orderId"`
-	CustomerName string             `bson:"customerName" json:"customerName"`
-	Phone        string             `bson:"phone" json:"phone"`
-	Address      string             `bson:"address" json:"address"`
-	Status       OrderStatus        `bson:"status" json:"status"`
-	CreateTime   primitive.DateTime `bson:"createTime" json:"createTime"`
-	UpdateTime   primitive.DateTime `bson:"updateTime" json:"-"`
-	Remark       string             `bson:"remark" json:"remark"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"-"`
+	OrderID          string             `bson:"orderId" json:"orderId"`
+	CustomerName     string             `bson:"customerName" json:"customerName"`
+	Phone            string             `bson:"phone" json:"phone"`
+	StartAddress     string             `bson:"startAddress" json:"startAddress"`
+	StartLng         string             `bson:"startLng" json:"startLng"`
+	StartLat         string             `bson:"startLat" json:"startLat"`
+	StartOutletId    string             `bson:"startOutletId" json:"startOutletId"`
+	EndAddress       string             `bson:"endAddress" json:"endAddress"`
+	EndLng           string             `bson:"endLng" json:"endLng"`
+	EndLat           string             `bson:"endLat" json:"endLat"`
+	EndOutletId      string             `bson:"endOutletId" json:"endOutletId"`
+	TransPortVehicle string             `bson:"transPortVehicle" json:"transPortVehicle"`
+	Weight           float64            `bson:"weight" json:"weight"`
+	Status           OrderStatus        `bson:"status" json:"status"`
+	CreateTime       primitive.DateTime `bson:"createTime" json:"createTime"`
+	UpdateTime       primitive.DateTime `bson:"updateTime" json:"-"`
+	Remark           string             `bson:"remark" json:"remark"`
 }
 
 // FindOrderListDTO 查询订单列表的参数
@@ -78,10 +87,25 @@ func UpdateOrder(order *Order) error {
 		"$set": bson.M{
 			"customerName": order.CustomerName,
 			"phone":        order.Phone,
-			"address":      order.Address,
 			"status":       order.Status,
 			"remark":       order.Remark,
 			"updateTime":   util.GetMongoTimeNow(),
+		},
+	}
+	_, err := OrderCollection.UpdateOne(context.Background(), filter, update)
+	return err
+}
+
+// CompleteOrder 完成订单数据
+func CompleteOrder(order *Order) error {
+	filter := bson.M{"orderId": order.OrderID}
+	update := bson.M{
+		"$set": bson.M{
+			"status":           Processing,
+			"startOutletId":    order.StartOutletId,
+			"endOutletId":      order.EndOutletId,
+			"transPortVehicle": order.TransPortVehicle,
+			"updateTime":       util.GetMongoTimeNow(),
 		},
 	}
 	_, err := OrderCollection.UpdateOne(context.Background(), filter, update)
@@ -191,4 +215,14 @@ func GetOrderCountByDate(date string) (int, error) {
 		return 0, err
 	}
 	return int(count), nil
+}
+
+func GetOrderById(orderId string) (*Order, error) {
+	filter := bson.M{"orderId": orderId}
+	var order Order
+	err := OrderCollection.FindOne(context.Background(), filter).Decode(&order)
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }

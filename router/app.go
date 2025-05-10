@@ -50,6 +50,7 @@ func Router() (server *gin.Engine) {
 		orderGroup.POST("/total", service.GetOrderTotalCount)
 		orderGroup.PUT("/update", service.UpdateOrder)
 		orderGroup.DELETE("/delete", service.DeleteOrder)
+		orderGroup.GET("/detail", service.GetOrderVO)
 	}
 	outletGroup := apiGroup.Group("/outlet")
 	{

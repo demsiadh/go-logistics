@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
 	"go_logistics/model/entity"
@@ -134,4 +135,28 @@ func GetVehicleTotalCount(c *gin.Context) {
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
+}
+
+// FindMaxRemainingCapacityVehicle 寻找车辆列表中当前剩余载重量最大的车辆
+func FindMaxRemainingCapacityVehicle(vehicles []*entity.Vehicle) (*entity.Vehicle, error) {
+	if len(vehicles) == 0 {
+		return nil, fmt.Errorf("no vehicles available")
+	}
+
+	var maxRemaining float64 = -1
+	var selectedVehicle *entity.Vehicle
+
+	for _, v := range vehicles {
+		remaining := v.LoadCapacity - v.CurrentLoad
+		if remaining > maxRemaining {
+			maxRemaining = remaining
+			selectedVehicle = v
+		}
+	}
+
+	if selectedVehicle == nil {
+		return nil, fmt.Errorf("unable to find vehicle with max remaining capacity")
+	}
+
+	return selectedVehicle, nil
 }

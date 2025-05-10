@@ -186,3 +186,36 @@ func GetRouteTotalCount(dto FindRouteListDTO) (count int64, err error) {
 	}
 	return documents, nil
 }
+
+// GetRouteByOutlets 根据起点和终点网点ID查询线路列表
+func GetRouteByOutlets(startOutletID, endOutletID string) ([]*Route, error) {
+	if startOutletID == "" || endOutletID == "" {
+		return nil, fmt.Errorf("起点或终点网点ID不能为空")
+	}
+
+	filter := bson.M{
+		"startOutlet": bson.M{"$regex": startOutletID, "$options": "i"},
+		"endOutlet":   bson.M{"$regex": endOutletID, "$options": "i"},
+	}
+
+	var routes []*Route
+	cursor, err := RouteCollection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var route Route
+		if err := cursor.Decode(&route); err != nil {
+			return nil, err
+		}
+		routes = append(routes, &route)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return routes, nil
+}
