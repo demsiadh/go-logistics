@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
 	"go_logistics/model/entity"
+	"go_logistics/model/vo"
 	"strconv"
 )
 
@@ -18,6 +19,8 @@ func CreateVehicle(c *gin.Context) {
 	statusInt, err := strconv.Atoi(status)
 	routeId := c.PostForm("routeId")
 	remarks := c.PostForm("remarks")
+	lng := c.PostForm("lng")
+	lat := c.PostForm("lat")
 	if plateNumber == "" || vType == "" || loadCapacity == "" || status == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
@@ -30,6 +33,8 @@ func CreateVehicle(c *gin.Context) {
 		Status:       entity.VehicleStatus(statusInt),
 		RouteID:      routeId,
 		Remarks:      remarks,
+		Lng:          lng,
+		Lat:          lat,
 	}
 
 	err = entity.InsertVehicle(vehicle)
@@ -52,7 +57,12 @@ func GetVehicleList(c *gin.Context) {
 		common.ErrorResponse(c, common.ServerError)
 		return
 	}
-	common.SuccessResponseWithData(c, vehicles)
+	vehicleVOs, err := vo.ToVehicleVOList(vehicles)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponseWithData(c, vehicleVOs)
 }
 
 // UpdateVehicle 更新车辆信息
@@ -66,8 +76,10 @@ func UpdateVehicle(c *gin.Context) {
 	statusInt, err := strconv.Atoi(status)
 	routeId := c.PostForm("routeId")
 	remarks := c.PostForm("remarks")
-
-	if plateNumber == "" || vType == "" || loadCapacity == "" || status == "" || routeId == "" || err != nil {
+	lng := c.PostForm("lng")
+	lat := c.PostForm("lat")
+	if plateNumber == "" || vType == "" || loadCapacity == "" ||
+		status == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -79,6 +91,8 @@ func UpdateVehicle(c *gin.Context) {
 		Status:       entity.VehicleStatus(statusInt),
 		RouteID:      routeId,
 		Remarks:      remarks,
+		Lng:          lng,
+		Lat:          lat,
 	}
 
 	err = entity.UpdateVehicle(vehicle)

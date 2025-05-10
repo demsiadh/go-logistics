@@ -81,7 +81,7 @@ func UpdateRoute(c *gin.Context) {
 	startOutlet := c.PostForm("startOutlet")
 	endOutlet := c.PostForm("endOutlet")
 	if routeId == "" || name == "" || routeType == "" || typeInt == 0 ||
-		statusInt == 0 || description == "" || pointsStr == "" || distance == "" ||
+		statusInt == 0 || pointsStr == "" || distance == "" ||
 		startOutlet == "" || endOutlet == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return

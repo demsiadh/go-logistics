@@ -58,6 +58,8 @@ type Vehicle struct {
 	RouteID      string             `bson:"routeId" json:"routeId"`
 	RouteName    string             `bson:"routeName" json:"routeName"`
 	Remarks      string             `bson:"remarks" json:"remarks"`
+	Lng          string             `bson:"lng" json:"lng"`
+	Lat          string             `bson:"lat" json:"lat"`
 	CreateTime   primitive.DateTime `bson:"createTime" json:"-"`
 	UpdateTime   primitive.DateTime `bson:"updateTime" json:"-"`
 }
@@ -113,24 +115,53 @@ func InsertVehicle(vehicle *Vehicle) error {
 
 // UpdateVehicle 修改车辆信息
 func UpdateVehicle(vehicle *Vehicle) error {
-	route, err := GetRouteById(vehicle.RouteID)
-	if err != nil {
-		return fmt.Errorf("线路不存在")
+	if vehicle == nil {
+		return fmt.Errorf("vehicle 不能为 nil")
 	}
+
+	if vehicle.PlateNumber == "" {
+		return fmt.Errorf("车牌号不能为空")
+	}
+
+	var routeName string
+	if vehicle.RouteID != "" {
+		route, err := GetRouteById(vehicle.RouteID)
+		if err != nil {
+			return err
+		}
+		if route == nil {
+			return fmt.Errorf("线路不存在")
+		}
+		routeName = route.Name
+	}
+
+	now := util.GetMongoTimeNow()
+
 	filter := bson.M{"plateNumber": vehicle.PlateNumber}
 	update := bson.M{
 		"$set": bson.M{
 			"type":         vehicle.Type,
 			"loadCapacity": vehicle.LoadCapacity,
 			"status":       vehicle.Status,
-			"routeId":      route.RouteID,
-			"routeName":    route.Name,
+			"routeId":      vehicle.RouteID,
+			"routeName":    routeName,
 			"remarks":      vehicle.Remarks,
-			"updateTime":   util.GetMongoTimeNow(),
+			"lng":          vehicle.Lng,
+			"lat":          vehicle.Lat,
+			"updateTime":   now,
 		},
 	}
-	_, err = VehicleCollection.UpdateOne(context.Background(), filter, update)
-	return err
+
+	result, err := VehicleCollection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("未找到匹配的车辆进行更新")
+	}
+
+	return nil
 }
 
 // DeleteVehicle 删除车辆
