@@ -6,6 +6,7 @@ import (
 	"go_logistics/common"
 	"go_logistics/model/entity"
 	"go_logistics/model/vo"
+	"go_logistics/util"
 	"strconv"
 )
 
@@ -159,4 +160,56 @@ func FindMaxRemainingCapacityVehicle(vehicles []*entity.Vehicle) (*entity.Vehicl
 	}
 
 	return selectedVehicle, nil
+}
+
+// CompleteTransport 完成运输
+func CompleteTransport(c *gin.Context) {
+	plateNumber := c.Query("plateNumber")
+	if plateNumber == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	vehicle, err := entity.GetVehicleById(plateNumber)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	if vehicle.RouteID == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	if vehicle.Status != entity.InTransit {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	err = resetVehicle(vehicle)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	err = entity.CompleteOrderByVehicle(vehicle)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError)
+		return
+	}
+	common.SuccessResponse(c)
+}
+
+func resetVehicle(vehicle *entity.Vehicle) error {
+	vehicle.CurrentLoad = 0.0
+	vehicle.Status = entity.Free
+	route, err := entity.GetRouteById(vehicle.RouteID)
+	if err != nil {
+		return err
+	}
+	points := route.Points
+	lastPoint := points[len(points)-1]
+	vehicle.Lng = fmt.Sprintf("%v", lastPoint.Coordinates[0])
+	vehicle.Lat = fmt.Sprintf("%v", lastPoint.Coordinates[1])
+	vehicle.RouteID = ""
+	vehicle.RouteName = ""
+	vehicleMu := util.GetVehicleLock(vehicle.PlateNumber)
+	vehicleMu.Lock()
+	defer vehicleMu.Unlock()
+	return entity.UpdateVehicle(vehicle)
 }

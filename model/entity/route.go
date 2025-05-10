@@ -219,3 +219,23 @@ func GetRouteByOutlets(startOutletID, endOutletID string) ([]*Route, error) {
 
 	return routes, nil
 }
+
+// GetRouteByOutletId 查询开始网点或结束网点包含指定网点ID的线路
+func GetRouteByOutletId(outletId string) (route *Route, err error) {
+	if outletId == "" {
+		return nil, fmt.Errorf("网点ID不能为空")
+	}
+
+	filter := bson.M{
+		"$or": []bson.M{
+			{"startOutlet": outletId},
+			{"endOutlet": outletId},
+		},
+	}
+
+	err = RouteCollection.FindOne(context.Background(), filter).Decode(&route)
+	if err != nil {
+		return nil, err
+	}
+	return route, nil
+}

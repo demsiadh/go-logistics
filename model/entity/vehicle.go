@@ -168,8 +168,15 @@ func UpdateVehicle(vehicle *Vehicle) error {
 
 // DeleteVehicle 删除车辆
 func DeleteVehicle(plateNumber string) error {
+	order, err := GetOrderByVehicle(plateNumber)
+	if err != nil {
+		return err
+	}
+	if order != nil {
+		return fmt.Errorf("车辆正在运货中，无法删除")
+	}
 	filter := bson.M{"plateNumber": plateNumber}
-	_, err := VehicleCollection.DeleteOne(context.Background(), filter)
+	_, err = VehicleCollection.DeleteOne(context.Background(), filter)
 	return err
 }
 

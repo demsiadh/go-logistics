@@ -2,9 +2,11 @@ package entity
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go_logistics/common"
 	"go_logistics/config"
@@ -96,8 +98,8 @@ func UpdateOrder(order *Order) error {
 	return err
 }
 
-// CompleteOrder 完成订单数据
-func CompleteOrder(order *Order) error {
+// CompleteDataOrder 完成订单数据
+func CompleteDataOrder(order *Order) error {
 	filter := bson.M{"orderId": order.OrderID}
 	update := bson.M{
 		"$set": bson.M{
@@ -135,10 +137,14 @@ func GetOrderList(dto FindOrderListDTO) (orders []*Order, err error) {
 	if !dto.StartTime.IsZero() || !dto.EndTime.IsZero() {
 		timeFilter := bson.M{}
 		if !dto.StartTime.IsZero() {
-			timeFilter["$gte"] = primitive.NewDateTimeFromTime(dto.StartTime)
+			// 将本地时间转为 UTC 时间
+			startUTC := dto.StartTime.UTC()
+			timeFilter["$gte"] = primitive.NewDateTimeFromTime(startUTC)
 		}
 		if !dto.EndTime.IsZero() {
-			timeFilter["$lte"] = primitive.NewDateTimeFromTime(dto.EndTime)
+			// 将本地时间转为 UTC 时间
+			endUTC := dto.EndTime.UTC()
+			timeFilter["$lte"] = primitive.NewDateTimeFromTime(endUTC)
 		}
 		filter["createTime"] = timeFilter
 	}
@@ -196,20 +202,29 @@ func GetOrderTotalCount(dto FindOrderListDTO) (count int64, err error) {
 	return documents, nil
 }
 
-// GetOrderCountByDate 获取指定日期的订单数量
+// GetOrderCountByDate 获取指定日期的订单数量（适配中国时区）
 func GetOrderCountByDate(date string) (int, error) {
+	// 解析输入日期，格式如 "20060102"
 	parsedDate, err := time.ParseInLocation("20060102", date, time.Local)
 	if err != nil {
 		return 0, err
 	}
-	startOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
+
+	// 构造当天的起止时间（本地时间，即中国时间）
+	startOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.Local)
 	endOfDay := startOfDay.AddDate(0, 0, 1)
+
+	// 转换为 UTC 时间用于数据库查询
+	startUTC := startOfDay.UTC()
+	endUTC := endOfDay.UTC()
+
 	filter := bson.M{
 		"createTime": bson.M{
-			"$gte": primitive.NewDateTimeFromTime(startOfDay),
-			"$lt":  primitive.NewDateTimeFromTime(endOfDay),
+			"$gte": primitive.NewDateTimeFromTime(startUTC),
+			"$lt":  primitive.NewDateTimeFromTime(endUTC),
 		},
 	}
+
 	count, err := OrderCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return 0, err
@@ -225,4 +240,43 @@ func GetOrderById(orderId string) (*Order, error) {
 		return nil, err
 	}
 	return &order, nil
+}
+
+// CompleteOrderByVehicle 以车辆为单位完成订单
+func CompleteOrderByVehicle(vehicle *Vehicle) error {
+	filter := bson.M{
+		"transPortVehicle": vehicle.PlateNumber,
+		"status":           Processing,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"status":     Completed,
+			"updateTime": util.GetMongoTimeNow(),
+		},
+	}
+	_, err := OrderCollection.UpdateMany(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetOrderByVehicle 根据车牌号获取订单
+func GetOrderByVehicle(plateNumber string) (order *Order, err error) {
+	filter := bson.M{
+		"transPortVehicle": plateNumber,
+		"status":           Processing,
+	}
+
+	var result Order
+	err = OrderCollection.FindOne(context.Background(), filter).Decode(&result)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			// 可选：将“未找到”视为无错误，返回 nil, nil
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &result, nil
 }

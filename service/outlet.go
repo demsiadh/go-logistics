@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"go_logistics/common"
-	"go_logistics/config"
 	"go_logistics/model/entity"
 	"strconv"
 )
@@ -128,7 +127,6 @@ func UpdateOutlet(c *gin.Context) {
 // DeleteOutlet 删除网点
 func DeleteOutlet(c *gin.Context) {
 	outletId := c.Query("outletId")
-	config.Log.Info(outletId)
 	if outletId == "" {
 		common.ErrorResponse(c, common.ParamError)
 		return

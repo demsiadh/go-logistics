@@ -94,6 +94,13 @@ func UpdateOutlet(outletId string, outlet *Outlet) error {
 
 // DeleteOutlet 删除网点
 func DeleteOutlet(outletId string) error {
+	route, err := GetRouteByOutletId(outletId)
+	if err != nil {
+		return err
+	}
+	if route != nil {
+		return fmt.Errorf("该网点存在关联线路！禁止删除")
+	}
 	// 将 outletId 转换为 primitive.ObjectID
 	objectId, err := primitive.ObjectIDFromHex(outletId)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"go_logistics/model/vo"
 	"go_logistics/util"
 	"math"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -81,7 +80,7 @@ func CreateOrder(c *gin.Context) {
 			config.Log.Warn("协程超时或被取消", zap.Error(ctx.Err()))
 			return
 		default:
-			completeOrder(orderID)
+			completeDataOrder(orderID)
 		}
 	}(ctx)
 
@@ -179,75 +178,62 @@ func GetOrderVO(c *gin.Context) {
 	common.SuccessResponseWithData(c, orderVO)
 }
 
-// LockPool Key-based Lock Pool
-var LockPool = struct {
-	mu sync.Mutex
-	m  map[string]*sync.Mutex
-}{m: make(map[string]*sync.Mutex)}
-
-func GetOrderLock(orderID string) *sync.Mutex {
-	LockPool.mu.Lock()
-	defer LockPool.mu.Unlock()
-
-	if _, exists := LockPool.m[orderID]; !exists {
-		LockPool.m[orderID] = &sync.Mutex{}
-	}
-	return LockPool.m[orderID]
-}
-
-func GetVehicleLock(plateNumber string) *sync.Mutex {
-	LockPool.mu.Lock()
-	defer LockPool.mu.Unlock()
-
-	if _, exists := LockPool.m[plateNumber]; !exists {
-		LockPool.m[plateNumber] = &sync.Mutex{}
-	}
-	return LockPool.m[plateNumber]
-}
-
-func completeOrder(orderId string) {
-	orderMu := GetOrderLock(orderId)
+func completeDataOrder(orderId string) {
+	orderMu := util.GetOrderLock(orderId)
 	orderMu.Lock()
 	defer orderMu.Unlock()
 
 	// 获取订单信息
 	order, err := entity.GetOrderById(orderId)
 	if err != nil {
-		config.Log.Warn("填充订单信息失败！", zap.String("orderId", orderId))
+		msg := "填充订单信息失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 查找起点网点
 	startOutlet, err := findNearOutlet(order.StartLng, order.StartLat)
 	if err != nil {
-		config.Log.Warn("查询起点网点失败！", zap.String("orderId", orderId))
+		msg := "查询起点网点失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 判断是否在范围内...
 	isInScope, err := util.IsPointInGeoPointSlice(order.StartLng, order.StartLat, startOutlet.Scope)
 	if err != nil || !isInScope {
-		config.Log.Warn("起点不在网点营业范围内！", zap.String("orderId", orderId))
+		msg := "起点不在网点营业范围内！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 查找终点网点...
 	endOutlet, err := findNearOutlet(order.EndLng, order.EndLat)
 	if err != nil {
-		config.Log.Warn("查询终点网点失败！", zap.String("orderId", orderId))
+		msg := "查询终点网点失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
+
 	// 判断是否在范围内...
-	isInScope, err = util.IsPointInGeoPointSlice(order.StartLng, order.StartLat, startOutlet.Scope)
+	isInScope, err = util.IsPointInGeoPointSlice(order.EndLng, order.EndLat, endOutlet.Scope)
 	if err != nil || !isInScope {
-		config.Log.Warn("终点不在网点营业范围内！", zap.String("orderId", orderId))
+		msg := "终点不在网点营业范围内！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 查询线路与车辆...
 	routes, err := entity.GetRouteByOutlets(startOutlet.ID.Hex(), endOutlet.ID.Hex())
 	if err != nil {
-		config.Log.Warn("获取线路失败！", zap.String("orderId", orderId))
+		msg := "获取线路失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
@@ -255,7 +241,9 @@ func completeOrder(orderId string) {
 	for _, route := range routes {
 		tempVehicles, err := entity.GetVehicleByRouteId(route.RouteID)
 		if err != nil {
-			config.Log.Warn("获取车辆失败！", zap.String("orderId", orderId))
+			msg := "获取车辆失败！"
+			config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+			_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 			return
 		}
 		if len(tempVehicles) > 0 {
@@ -265,22 +253,27 @@ func completeOrder(orderId string) {
 
 	vehicle, err := FindMaxRemainingCapacityVehicle(vehicles)
 	if err != nil {
-		config.Log.Warn("获取最优车辆失败！", zap.String("orderId", orderId))
+		msg := "获取最优车辆失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 获取车辆锁
-	vehicleMu := GetVehicleLock(vehicle.PlateNumber)
+	vehicleMu := util.GetVehicleLock(vehicle.PlateNumber)
 	vehicleMu.Lock()
 	defer vehicleMu.Unlock()
 
 	// 检查载重
 	if vehicle.CurrentLoad+order.Weight > vehicle.LoadCapacity {
-		config.Log.Warn("当前车辆超载！", zap.String("orderId", orderId))
+		msg := "当前车辆超载！"
+		config.Log.Warn(msg, zap.String("orderId", orderId))
 		vehicle.Status = entity.InTransit
 		err = entity.UpdateVehicle(vehicle)
 		if err != nil {
-			config.Log.Warn("更新车辆状态失败！", zap.String("orderId", orderId))
+			_ = updateOrderRemark(order, msg+" 更新车辆状态失败: "+err.Error())
+		} else {
+			_ = updateOrderRemark(order, msg)
 		}
 		return
 	}
@@ -289,19 +282,30 @@ func completeOrder(orderId string) {
 	vehicle.CurrentLoad += order.Weight
 	err = entity.UpdateVehicle(vehicle)
 	if err != nil {
-		config.Log.Warn("更新车辆状态失败！", zap.String("orderId", orderId))
+		msg := "更新车辆状态失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
 
 	// 更新订单状态
 	order.StartOutletId = startOutlet.ID.Hex()
 	order.EndOutletId = endOutlet.ID.Hex()
+	order.Remark = ""
 	order.TransPortVehicle = vehicle.PlateNumber
-	err = entity.CompleteOrder(order)
+	err = entity.CompleteDataOrder(order)
 	if err != nil {
-		config.Log.Warn("更新订单状态失败！", zap.String("orderId", orderId))
+		msg := "更新订单状态失败！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
+}
+
+// updateOrderRemark 更新订单的备注字段
+func updateOrderRemark(order *entity.Order, remark string) error {
+	order.Remark = remark
+	return entity.UpdateOrder(order)
 }
 
 // 查找最近的网点
@@ -339,4 +343,15 @@ func findNearOutlet(lng string, lat string) (*entity.Outlet, error) {
 	}
 
 	return nearest, nil
+}
+
+// DispatchOrder 手动调度订单
+func DispatchOrder(c *gin.Context) {
+	orderId := c.Query("orderId")
+	if orderId == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	completeDataOrder(orderId)
+	common.SuccessResponse(c)
 }

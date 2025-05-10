@@ -28,43 +28,94 @@ type OrderVO struct {
 }
 
 func ToOrderVO(order *entity.Order) (OrderVO, error) {
-	startOutlet, err := entity.GetOutletById(order.StartOutletId)
-	if err != nil {
-		return OrderVO{}, err
+	var startOutlet *entity.Outlet
+	var endOutlet *entity.Outlet
+	var vehicle *entity.Vehicle
+	var route *entity.Route
+
+	// 处理开始网点
+	if order.StartOutletId != "" {
+		outlet, err := entity.GetOutletById(order.StartOutletId)
+		if err != nil {
+			// 可选：记录日志
+			// log.Printf("获取开始网点失败: %v", err)
+		} else {
+			startOutlet = outlet
+		}
 	}
-	endOutlet, err := entity.GetOutletById(order.EndOutletId)
-	if err != nil {
-		return OrderVO{}, err
+
+	// 处理结束网点
+	if order.EndOutletId != "" {
+		outlet, err := entity.GetOutletById(order.EndOutletId)
+		if err != nil {
+			// log.Printf("获取结束网点失败: %v", err)
+		} else {
+			endOutlet = outlet
+		}
 	}
-	vehicle, err := entity.GetVehicleById(order.TransPortVehicle)
-	if err != nil {
-		return OrderVO{}, err
+
+	// 处理运输车辆
+	if order.TransPortVehicle != "" {
+		v, err := entity.GetVehicleById(order.TransPortVehicle)
+		if err != nil {
+			// log.Printf("获取车辆失败: %v", err)
+		} else {
+			vehicle = v
+		}
 	}
-	route, err := entity.GetRouteById(vehicle.RouteID)
-	if err != nil {
-		return OrderVO{}, err
+
+	// 处理线路（依赖车辆）
+	if vehicle != nil && vehicle.RouteID != "" {
+		r, err := entity.GetRouteById(vehicle.RouteID)
+		if err != nil {
+			// log.Printf("获取线路失败: %v", err)
+		} else {
+			route = r
+		}
 	}
-	return OrderVO{
-		ID:               order.ID,
-		OrderID:          order.OrderID,
-		CustomerName:     order.CustomerName,
-		Phone:            order.Phone,
-		StartAddress:     order.StartAddress,
-		StartLng:         order.StartLng,
-		StartLat:         order.StartLat,
-		StartOutlet:      *startOutlet,
-		EndAddress:       order.EndAddress,
-		EndLng:           order.EndLng,
-		EndLat:           order.EndLat,
-		EndOutlet:        *endOutlet,
-		TransPortVehicle: *vehicle,
-		Route:            *route,
-		Weight:           order.Weight,
-		Status:           order.Status,
-		CreateTime:       order.CreateTime,
-		UpdateTime:       order.UpdateTime,
-		Remark:           order.Remark,
-	}, nil
+
+	orderVO := OrderVO{
+		ID:           order.ID,
+		OrderID:      order.OrderID,
+		CustomerName: order.CustomerName,
+		Phone:        order.Phone,
+		StartAddress: order.StartAddress,
+		StartLng:     order.StartLng,
+		StartLat:     order.StartLat,
+		StartOutlet: func() entity.Outlet {
+			if startOutlet != nil {
+				return *startOutlet
+			}
+			return entity.Outlet{}
+		}(),
+		EndAddress: order.EndAddress,
+		EndLng:     order.EndLng,
+		EndLat:     order.EndLat,
+		EndOutlet: func() entity.Outlet {
+			if endOutlet != nil {
+				return *endOutlet
+			}
+			return entity.Outlet{}
+		}(),
+		TransPortVehicle: func() entity.Vehicle {
+			if vehicle != nil {
+				return *vehicle
+			}
+			return entity.Vehicle{}
+		}(),
+		Route: func() entity.Route {
+			if route != nil {
+				return *route
+			}
+			return entity.Route{}
+		}(),
+		Weight:     order.Weight,
+		Status:     order.Status,
+		CreateTime: order.CreateTime,
+		UpdateTime: order.UpdateTime,
+		Remark:     order.Remark,
+	}
+	return orderVO, nil
 }
 
 func ToOrderVOList(orders []*entity.Order) ([]OrderVO, error) {
