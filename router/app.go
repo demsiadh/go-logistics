@@ -41,13 +41,13 @@ func Router() (server *gin.Engine) {
 		userGroup.DELETE("/delete", service.DeleteUser)
 		userGroup.POST("/login", service.LoginUser)
 		userGroup.GET("/loginStatus", service.GetUserLoginStatus)
-		userGroup.GET("/total", service.GetTotalCount)
+		userGroup.POST("/total", service.GetTotalCount)
 	}
 	orderGroup := apiGroup.Group("/order")
 	{
 		orderGroup.POST("/create", service.CreateOrder)
 		orderGroup.POST("/list", service.GetOrderList)
-		orderGroup.GET("/total", service.GetOrderTotalCount)
+		orderGroup.POST("/total", service.GetOrderTotalCount)
 		orderGroup.PUT("/update", service.UpdateOrder)
 		orderGroup.DELETE("/delete", service.DeleteOrder)
 	}
@@ -55,16 +55,17 @@ func Router() (server *gin.Engine) {
 	{
 		outletGroup.POST("/create", service.CreateOutlet)
 		outletGroup.POST("/list", service.GetOutletList)
-		outletGroup.GET("/total", service.GetOutletTotalCount)
+		outletGroup.POST("/total", service.GetOutletTotalCount)
 		outletGroup.PUT("/update", service.UpdateOutlet)
 		outletGroup.DELETE("/delete", service.DeleteOutlet)
 		outletGroup.GET("/allProvincesAndCities", service.GetAllProvincesAndCities)
+		outletGroup.GET("/id", service.GetOutletById)
 	}
 	routeGroup := apiGroup.Group("/route")
 	{
 		routeGroup.POST("/create", service.CreateRoute)
 		routeGroup.POST("/list", service.GetRouteList)
-		routeGroup.GET("/total", service.GetRouteTotalCount)
+		routeGroup.POST("/total", service.GetRouteTotalCount)
 		routeGroup.PUT("/update", service.UpdateRoute)
 		routeGroup.DELETE("/delete", service.DeleteRoute)
 	}
@@ -73,7 +74,7 @@ func Router() (server *gin.Engine) {
 	{
 		vehicleGroup.POST("/create", service.CreateVehicle)
 		vehicleGroup.POST("/list", service.GetVehicleList)
-		vehicleGroup.GET("/total", service.GetVehicleTotalCount)
+		vehicleGroup.POST("/total", service.GetVehicleTotalCount)
 		vehicleGroup.PUT("/update", service.UpdateVehicle)
 		vehicleGroup.DELETE("/delete", service.DeleteVehicle)
 	}
@@ -101,6 +102,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 	// 定义白名单路径（支持精确匹配）
 	whitelist := map[string]bool{
 		"/api/user/login": true, // 登录接口
+		"/api/llm/chat":   true,
 	}
 
 	return func(c *gin.Context) {
@@ -112,11 +114,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 		}
 
 		var token string
-		if currentPath == "/api/llm/chat" {
-			token = c.Query("logistics_token")
-		} else {
-			token = c.GetHeader("logistics_token")
-		}
+		token = c.GetHeader("logistics_token")
 		if token == "" {
 			common.AbortResponse(c, common.NotLogin)
 			return

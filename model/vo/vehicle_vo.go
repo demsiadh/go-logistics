@@ -10,6 +10,7 @@ type VehicleVO struct {
 	PlateNumber  string               `bson:"plateNumber" json:"plateNumber"`
 	Type         entity.VehicleType   `bson:"type" json:"type"`
 	LoadCapacity float64              `bson:"loadCapacity" json:"loadCapacity"`
+	CurrentLoad  float64              `bson:"currentLoad" json:"currentLoad"`
 	Status       entity.VehicleStatus `bson:"status" json:"status"`
 	RouteID      string               `bson:"routeId" json:"routeId"`
 	RouteName    string               `bson:"routeName" json:"routeName"`
@@ -37,6 +38,7 @@ func ToVehicleVO(vehicle *entity.Vehicle) (VehicleVO, error) {
 		PlateNumber:  vehicle.PlateNumber,
 		Type:         vehicle.Type,
 		LoadCapacity: vehicle.LoadCapacity,
+		CurrentLoad:  vehicle.CurrentLoad,
 		Status:       vehicle.Status,
 		RouteID:      vehicle.RouteID,
 		RouteName:    vehicle.RouteName,

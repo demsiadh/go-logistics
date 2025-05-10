@@ -54,6 +54,7 @@ type Vehicle struct {
 	PlateNumber  string             `bson:"plateNumber" json:"plateNumber"`
 	Type         VehicleType        `bson:"type" json:"type"`
 	LoadCapacity float64            `bson:"loadCapacity" json:"loadCapacity"`
+	CurrentLoad  float64            `bson:"currentLoad" json:"currentLoad"`
 	Status       VehicleStatus      `bson:"status" json:"status"`
 	RouteID      string             `bson:"routeId" json:"routeId"`
 	RouteName    string             `bson:"routeName" json:"routeName"`

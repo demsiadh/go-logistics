@@ -72,6 +72,8 @@ func UpdateVehicle(c *gin.Context) {
 	vTypeInt, err := strconv.Atoi(vType)
 	loadCapacity := c.PostForm("loadCapacity")
 	loadCapacityFloat, err := strconv.ParseFloat(loadCapacity, 64)
+	currentLoad := c.PostForm("currentLoad")
+	currentLoadFloat, err := strconv.ParseFloat(currentLoad, 64)
 	status := c.PostForm("status")
 	statusInt, err := strconv.Atoi(status)
 	routeId := c.PostForm("routeId")
@@ -79,7 +81,7 @@ func UpdateVehicle(c *gin.Context) {
 	lng := c.PostForm("lng")
 	lat := c.PostForm("lat")
 	if plateNumber == "" || vType == "" || loadCapacity == "" ||
-		status == "" || err != nil {
+		currentLoad == "" || status == "" || err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
@@ -88,6 +90,7 @@ func UpdateVehicle(c *gin.Context) {
 		PlateNumber:  plateNumber,
 		Type:         entity.VehicleType(vTypeInt),
 		LoadCapacity: loadCapacityFloat,
+		CurrentLoad:  currentLoadFloat,
 		Status:       entity.VehicleStatus(statusInt),
 		RouteID:      routeId,
 		Remarks:      remarks,
