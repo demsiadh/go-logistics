@@ -138,8 +138,21 @@ func GetUserList(dto FindUserListDTO) (users []*User, err error) {
 }
 
 // GetTotalCount 获取用户总数
-func GetTotalCount() (count int64, err error) {
-	documents, err := UserCollection.CountDocuments(context.Background(), bson.M{})
+func GetTotalCount(dto FindUserListDTO) (count int64, err error) {
+	filter := bson.M{}
+	if dto.Name != "" {
+		filter["name"] = bson.M{"$regex": dto.Name, "$options": "i"}
+	}
+	if dto.Phone != "" {
+		filter["phone"] = bson.M{"$regex": dto.Phone, "$options": "i"}
+	}
+	if dto.Email != "" {
+		filter["email"] = bson.M{"$regex": dto.Email, "$options": "i"}
+	}
+	if dto.Status != 0 {
+		filter["status"] = dto.Status
+	}
+	documents, err := UserCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return
 	}

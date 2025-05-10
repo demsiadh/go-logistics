@@ -213,8 +213,24 @@ func GetVehicleList(dto FindVehicleListDTO) (vehicles []*Vehicle, err error) {
 }
 
 // GetVehicleTotalCount 获取车辆总数
-func GetVehicleTotalCount() (count int64, err error) {
-	documents, err := VehicleCollection.CountDocuments(context.Background(), bson.M{})
+func GetVehicleTotalCount(dto FindVehicleListDTO) (count int64, err error) {
+	filter := bson.M{}
+	if dto.PlateNumber != "" {
+		filter["plateNumber"] = bson.M{"$regex": dto.PlateNumber, "$options": "i"}
+	}
+	if dto.Type != 0 {
+		filter["type"] = dto.Type
+	}
+	if dto.Status != 0 {
+		filter["status"] = dto.Status
+	}
+	if dto.RouteID != "" {
+		filter["routeId"] = bson.M{"$regex": dto.RouteID, "$options": "i"}
+	}
+	if dto.RouteName != "" {
+		filter["routeName"] = bson.M{"$regex": dto.RouteName, "$options": "i"}
+	}
+	documents, err := VehicleCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return
 	}

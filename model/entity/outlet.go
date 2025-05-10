@@ -152,8 +152,21 @@ func GetOutletList(dto FindOutletListDTO) (outlets []*Outlet, err error) {
 }
 
 // GetOutletTotalCount 获取总数
-func GetOutletTotalCount() (count int64, err error) {
-	documents, err := OutletCollection.CountDocuments(context.Background(), bson.M{})
+func GetOutletTotalCount(dto FindOutletListDTO) (count int64, err error) {
+	filter := bson.M{}
+	if dto.Name != "" {
+		filter["name"] = bson.M{"$regex": dto.Name, "$options": "i"}
+	}
+	if dto.Province != "" {
+		filter["province"] = bson.M{"$regex": dto.Province, "$options": "i"}
+	}
+	if dto.City != "" {
+		filter["city"] = bson.M{"$regex": dto.City, "$options": "i"}
+	}
+	if dto.Status != 0 {
+		filter["status"] = dto.Status
+	}
+	documents, err := OutletCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return
 	}

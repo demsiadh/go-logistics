@@ -143,7 +143,12 @@ func DeleteOutlet(c *gin.Context) {
 
 // GetOutletTotalCount 获取网点总数
 func GetOutletTotalCount(c *gin.Context) {
-	totalCount, err := entity.GetOutletTotalCount()
+	var dto entity.FindOutletListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	totalCount, err := entity.GetOutletTotalCount(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return

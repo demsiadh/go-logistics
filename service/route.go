@@ -151,7 +151,12 @@ func DeleteRoute(c *gin.Context) {
 
 // GetRouteTotalCount 获取线路总数
 func GetRouteTotalCount(c *gin.Context) {
-	totalCount, err := entity.GetRouteTotalCount()
+	var dto entity.FindRouteListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	totalCount, err := entity.GetRouteTotalCount(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return

@@ -143,8 +143,29 @@ func GetOrderList(dto FindOrderListDTO) (orders []*Order, err error) {
 }
 
 // GetOrderTotalCount 获取订单总数
-func GetOrderTotalCount() (count int64, err error) {
-	documents, err := OrderCollection.CountDocuments(context.Background(), bson.M{})
+func GetOrderTotalCount(dto FindOrderListDTO) (count int64, err error) {
+	filter := bson.M{}
+	if dto.OrderID != "" {
+		filter["orderId"] = bson.M{"$regex": dto.OrderID, "$options": "i"}
+	}
+
+	if dto.Phone != "" {
+		filter["phone"] = bson.M{"$regex": dto.Phone, "$options": "i"}
+	}
+	if dto.Status != 0 {
+		filter["status"] = dto.Status
+	}
+	if !dto.StartTime.IsZero() || !dto.EndTime.IsZero() {
+		timeFilter := bson.M{}
+		if !dto.StartTime.IsZero() {
+			timeFilter["$gte"] = primitive.NewDateTimeFromTime(dto.StartTime)
+		}
+		if !dto.EndTime.IsZero() {
+			timeFilter["$lte"] = primitive.NewDateTimeFromTime(dto.EndTime)
+		}
+		filter["createTime"] = timeFilter
+	}
+	documents, err := OrderCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return
 	}

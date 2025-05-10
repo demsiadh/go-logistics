@@ -116,7 +116,12 @@ func DeleteOrder(c *gin.Context) {
 
 // GetOrderTotalCount 获取订单总数
 func GetOrderTotalCount(c *gin.Context) {
-	totalCount, err := entity.GetOrderTotalCount()
+	var dto entity.FindOrderListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	totalCount, err := entity.GetOrderTotalCount(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return

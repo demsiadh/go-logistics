@@ -120,7 +120,12 @@ func DeleteVehicle(c *gin.Context) {
 
 // GetVehicleTotalCount 获取车辆总数
 func GetVehicleTotalCount(c *gin.Context) {
-	totalCount, err := entity.GetVehicleTotalCount()
+	var dto entity.FindVehicleListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	totalCount, err := entity.GetVehicleTotalCount(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return

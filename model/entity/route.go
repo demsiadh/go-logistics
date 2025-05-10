@@ -166,8 +166,21 @@ func GetRouteList(dto FindRouteListDTO) (routes []*Route, err error) {
 }
 
 // GetRouteTotalCount 获取线路总数
-func GetRouteTotalCount() (count int64, err error) {
-	documents, err := RouteCollection.CountDocuments(context.Background(), bson.M{})
+func GetRouteTotalCount(dto FindRouteListDTO) (count int64, err error) {
+	filter := bson.M{}
+	if dto.RouteID != "" {
+		filter["routeId"] = bson.M{"$regex": dto.RouteID, "$options": "i"}
+	}
+	if dto.Name != "" {
+		filter["name"] = bson.M{"$regex": dto.Name, "$options": "i"}
+	}
+	if dto.Type != 0 {
+		filter["type"] = dto.Type
+	}
+	if dto.Status != 0 {
+		filter["status"] = dto.Status
+	}
+	documents, err := RouteCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return
 	}

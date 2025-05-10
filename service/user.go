@@ -157,7 +157,12 @@ func GetUserLoginStatus(c *gin.Context) {
 }
 
 func GetTotalCount(c *gin.Context) {
-	totalCount, err := entity.GetTotalCount()
+	var dto entity.FindUserListDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	totalCount, err := entity.GetTotalCount(dto)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError)
 		return
