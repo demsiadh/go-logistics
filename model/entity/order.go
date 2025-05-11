@@ -108,6 +108,7 @@ func CompleteDataOrder(order *Order) error {
 			"endOutletId":      order.EndOutletId,
 			"transPortVehicle": order.TransPortVehicle,
 			"updateTime":       util.GetMongoTimeNow(),
+			"remark":           order.Remark,
 		},
 	}
 	_, err := OrderCollection.UpdateOne(context.Background(), filter, update)

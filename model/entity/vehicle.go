@@ -134,10 +134,24 @@ func UpdateVehicle(vehicle *Vehicle) error {
 			return fmt.Errorf("线路不存在")
 		}
 		routeName = route.Name
+		var dbVehicle Vehicle
+		filter := bson.M{"plateNumber": vehicle.PlateNumber}
+		err = VehicleCollection.FindOne(context.Background(), filter).Decode(&dbVehicle)
+		if err != nil {
+			return fmt.Errorf("车辆不存在")
+		}
+
+		if dbVehicle.RouteID != vehicle.RouteID {
+			points := route.Points
+			if len(points) > 0 {
+				firstPoint := points[0]
+				vehicle.Lng = fmt.Sprintf("%v", firstPoint.Coordinates[0])
+				vehicle.Lat = fmt.Sprintf("%v", firstPoint.Coordinates[1])
+			}
+		}
+
 	}
-
 	now := util.GetMongoTimeNow()
-
 	filter := bson.M{"plateNumber": vehicle.PlateNumber}
 	update := bson.M{
 		"$set": bson.M{

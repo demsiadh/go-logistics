@@ -16,18 +16,6 @@ import (
 	"strconv"
 )
 
-// generateOrderID 生成订单ID
-func generateOrderID() (string, error) {
-	currentDate := time.Now().Format("20060102")
-	count, err := entity.GetOrderCountByDate(currentDate)
-	if err != nil {
-		return "", err
-	}
-	count++
-	orderID := fmt.Sprintf("LY%s%04d", currentDate, count)
-	return orderID, nil
-}
-
 // CreateOrder 创建订单
 func CreateOrder(c *gin.Context) {
 	customerName := c.PostForm("customerName")
@@ -46,7 +34,7 @@ func CreateOrder(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	orderID, err := generateOrderID()
+	orderID, err := util.GenerateOrderID()
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
@@ -227,6 +215,22 @@ func completeDataOrder(orderId string) {
 		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
+	if startOutlet.ID.Hex() == endOutlet.ID.Hex() {
+		msg := "起点与终点在同一个网点！"
+		config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+		// 更新订单状态
+		order.StartOutletId = startOutlet.ID.Hex()
+		order.EndOutletId = endOutlet.ID.Hex()
+		order.Remark = ""
+		err = entity.CompleteDataOrder(order)
+		if err != nil {
+			msg := "更新订单状态失败！"
+			config.Log.Warn(msg, zap.String("orderId", orderId), zap.Error(err))
+			_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
+			return
+		}
+		return
+	}
 
 	// 查询线路与车辆...
 	routes, err := entity.GetRouteByOutlets(startOutlet.ID.Hex(), endOutlet.ID.Hex())
@@ -278,8 +282,11 @@ func completeDataOrder(orderId string) {
 		return
 	}
 
+	// 定义精度常量（保留4位小数，即精确到0.1公斤）
+	const precisionFactor = 10000 // 10^4 = 10000
+
 	// 更新车辆负载
-	vehicle.CurrentLoad += order.Weight
+	vehicle.CurrentLoad = roundToPrecision(vehicle.CurrentLoad+order.Weight, precisionFactor)
 	err = entity.UpdateVehicle(vehicle)
 	if err != nil {
 		msg := "更新车辆状态失败！"
@@ -300,6 +307,11 @@ func completeDataOrder(orderId string) {
 		_ = updateOrderRemark(order, msg+" 错误原因: "+err.Error())
 		return
 	}
+}
+
+// 四舍五入到指定精度
+func roundToPrecision(value float64, factor int) float64 {
+	return float64(int64(value*float64(factor)+0.5)) / float64(factor)
 }
 
 // updateOrderRemark 更新订单的备注字段
