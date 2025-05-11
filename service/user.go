@@ -46,7 +46,7 @@ func CreateUser(c *gin.Context) {
 	user.Status = entity.Active
 	err := entity.InsertUser(user)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -61,7 +61,7 @@ func GetUserList(c *gin.Context) {
 	}
 	users, err := entity.GetUserList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, vo.ToUserVOList(users))
@@ -91,7 +91,7 @@ func UpdateUser(c *gin.Context) {
 	user.Status = entity.UserStatus(statusInt)
 	err = entity.UpdateUser(user)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -106,7 +106,7 @@ func DeleteUser(c *gin.Context) {
 	}
 	err := entity.DeleteUser(name)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -138,7 +138,7 @@ func LoginUser(c *gin.Context) {
 	}
 	token, err := util.GenerateToken(user.Name)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	c.Header("logistics_token", token)
@@ -164,7 +164,7 @@ func GetTotalCount(c *gin.Context) {
 	}
 	totalCount, err := entity.GetTotalCount(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)

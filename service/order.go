@@ -48,7 +48,7 @@ func CreateOrder(c *gin.Context) {
 	}
 	orderID, err := generateOrderID()
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	order := &entity.Order{
@@ -67,7 +67,7 @@ func CreateOrder(c *gin.Context) {
 	}
 	err = entity.InsertOrder(order)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 
@@ -96,7 +96,7 @@ func GetOrderList(c *gin.Context) {
 	}
 	orders, err := entity.GetOrderList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, orders)
@@ -123,7 +123,7 @@ func UpdateOrder(c *gin.Context) {
 	}
 	err = entity.UpdateOrder(order)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -138,7 +138,7 @@ func DeleteOrder(c *gin.Context) {
 	}
 	err := entity.DeleteOrder(orderId)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -153,7 +153,7 @@ func GetOrderTotalCount(c *gin.Context) {
 	}
 	totalCount, err := entity.GetOrderTotalCount(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
@@ -167,12 +167,12 @@ func GetOrderVO(c *gin.Context) {
 	}
 	order, err := entity.GetOrderById(orderId)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	orderVO, err := vo.ToOrderVO(order)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, orderVO)

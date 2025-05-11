@@ -53,7 +53,7 @@ func CreateOutlet(c *gin.Context) {
 	}
 	err = entity.InsertOutlet(outlet)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -68,7 +68,7 @@ func GetOutletList(c *gin.Context) {
 	}
 	outlets, err := entity.GetOutletList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, outlets)
@@ -118,7 +118,7 @@ func UpdateOutlet(c *gin.Context) {
 	}
 	err = entity.UpdateOutlet(outletId, outlet)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -133,7 +133,7 @@ func DeleteOutlet(c *gin.Context) {
 	}
 	err := entity.DeleteOutlet(outletId)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -148,7 +148,7 @@ func GetOutletTotalCount(c *gin.Context) {
 	}
 	totalCount, err := entity.GetOutletTotalCount(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
@@ -158,7 +158,7 @@ func GetOutletTotalCount(c *gin.Context) {
 func GetAllProvincesAndCities(c *gin.Context) {
 	result, err := entity.GetAllProvincesAndCities()
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, result)
@@ -172,7 +172,7 @@ func GetOutletById(c *gin.Context) {
 	}
 	outlet, err := entity.GetOutletById(outletId)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, outlet)

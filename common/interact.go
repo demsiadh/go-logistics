@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -71,7 +72,12 @@ func (e *ErrorMsg) Error() string {
 }
 
 var (
-	ServerError             = &ErrorMsg{Code: 50001, Message: "服务器错误"}
+	ServerError = func(msg string) *ErrorMsg {
+		return &ErrorMsg{
+			Code:    50001,
+			Message: fmt.Sprintf("服务器错误：%s", msg),
+		}
+	}
 	ParamError              = &ErrorMsg{Code: 40001, Message: "参数错误"}
 	RecordNotFound          = &ErrorMsg{Code: 60001, Message: "记录不存在"}
 	RecordExist             = &ErrorMsg{Code: 60002, Message: "记录已存在"}

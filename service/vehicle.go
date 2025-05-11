@@ -41,7 +41,7 @@ func CreateVehicle(c *gin.Context) {
 
 	err = entity.InsertVehicle(vehicle)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -56,12 +56,12 @@ func GetVehicleList(c *gin.Context) {
 	}
 	vehicles, err := entity.GetVehicleList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	vehicleVOs, err := vo.ToVehicleVOList(vehicles)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, vehicleVOs)
@@ -102,7 +102,7 @@ func UpdateVehicle(c *gin.Context) {
 
 	err = entity.UpdateVehicle(vehicle)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -117,7 +117,7 @@ func DeleteVehicle(c *gin.Context) {
 	}
 	err := entity.DeleteVehicle(id)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -132,7 +132,7 @@ func GetVehicleTotalCount(c *gin.Context) {
 	}
 	totalCount, err := entity.GetVehicleTotalCount(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
@@ -171,7 +171,7 @@ func CompleteTransport(c *gin.Context) {
 	}
 	vehicle, err := entity.GetVehicleById(plateNumber)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	if vehicle.RouteID == "" {
@@ -184,12 +184,12 @@ func CompleteTransport(c *gin.Context) {
 	}
 	err = resetVehicle(vehicle)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	err = entity.CompleteOrderByVehicle(vehicle)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)

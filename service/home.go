@@ -15,7 +15,7 @@ func GetOutletView(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 	}
 	common.SuccessResponseWithData(c, outlets)
 }
@@ -36,7 +36,7 @@ func GetOrderView(c *gin.Context) {
 
 	orders, err := entity.GetOrderList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 	}
 	result := GroupOrdersByDateAndStatus(orders)
 	common.SuccessResponseWithData(c, result)
@@ -98,7 +98,7 @@ func GetVehicleView(c *gin.Context) {
 
 	vehicles, err := entity.GetVehicleList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 	}
 	result := GroupVehiclesByStatus(vehicles)
 	common.SuccessResponseWithData(c, result)
@@ -137,7 +137,7 @@ func GetRouteView(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 	}
 	result := GroupRoutesByType(routes)
 	common.SuccessResponseWithData(c, result)

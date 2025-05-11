@@ -42,7 +42,7 @@ func CreateRoute(c *gin.Context) {
 	// 使用雪花算法生成16位的线路ID
 	node, err := snowflake.NewNode(1)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	snowflakeID := node.Generate()
@@ -60,7 +60,7 @@ func CreateRoute(c *gin.Context) {
 	}
 	err = entity.InsertRoute(route)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -108,7 +108,7 @@ func UpdateRoute(c *gin.Context) {
 	}
 	err = entity.UpdateRoute(route)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -123,12 +123,12 @@ func GetRouteList(c *gin.Context) {
 	}
 	routes, err := entity.GetRouteList(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	routeVOs, err := vo.ToRouteVOList(routes)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, routeVOs)
@@ -143,7 +143,7 @@ func DeleteRoute(c *gin.Context) {
 	}
 	err := entity.DeleteRoute(routeId)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
@@ -158,7 +158,7 @@ func GetRouteTotalCount(c *gin.Context) {
 	}
 	totalCount, err := entity.GetRouteTotalCount(dto)
 	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponseWithData(c, totalCount)
