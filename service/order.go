@@ -1,20 +1,20 @@
 package service
 
 import (
-	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/panjf2000/ants/v2"
 	"go.uber.org/zap"
+	"go_logistics/common"
 	"go_logistics/config"
+	"go_logistics/model/entity"
 	"go_logistics/model/vo"
 	"go_logistics/util"
 	"math"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"go_logistics/common"
-	"go_logistics/model/entity"
 	"strconv"
 )
+
+var taskPool, _ = ants.NewPool(16)
 
 // CreateOrder 创建订单
 func CreateOrder(c *gin.Context) {
@@ -59,18 +59,10 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
-
-	go func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			config.Log.Warn("协程超时或被取消", zap.Error(ctx.Err()))
-			return
-		default:
-			completeDataOrder(orderID)
-		}
-	}(ctx)
+	// 异步提交后台任务
+	_ = taskPool.Submit(func() {
+		completeDataOrder(orderID)
+	})
 
 	common.SuccessResponse(c)
 }
