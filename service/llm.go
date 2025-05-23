@@ -10,9 +10,9 @@ import (
 	"go_logistics/common"
 	"go_logistics/config"
 	"go_logistics/model/dto"
+	"go_logistics/model/entity"
 	"io"
 	"net/http"
-	"sync"
 )
 
 const (
@@ -21,27 +21,31 @@ const (
 	LLMModelDeepseek     string = "deepseek-reasoner"
 )
 
-// 定义互斥锁
-var mu sync.Mutex
-var chatHistoryMap = make(map[string][]llms.MessageContent) // key: 用户ID 或 会话ID
-
 func ChatLLM(c *gin.Context) {
 	var req dto.LLMRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Println(err)
+	var err error
+	if err = c.ShouldBindJSON(&req); err != nil {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
 	username := c.GetString("name")
-	// 获取或初始化该用户的对话历史
-	mu.Lock()
-	history, exists := chatHistoryMap[username]
-	if !exists {
+	// 第一次对话
+	var history []llms.MessageContent
+	isFirst := req.ChatId == ""
+	if isFirst {
 		history = []llms.MessageContent{
 			llms.TextParts(llms.ChatMessageTypeSystem, config.SystemPrompt),
 		}
+	} else {
+		var chatService *entity.ChatService
+		chatService, err = entity.GetChatByIdAndUsername(req.ChatId, username)
+		if err != nil {
+			config.Log.Error("获取对话信息失败", zap.Error(err))
+			common.ErrorResponse(c, common.ServerError("获取对话信息失败"))
+			return
+		}
+		history = chatService.Message
 	}
-	mu.Unlock()
 
 	// 格式化当前用户输入
 	content, err := formatPrompt(req.Message)
@@ -93,7 +97,7 @@ func ChatLLM(c *gin.Context) {
 		}
 
 		// 使用完整的对话历史调用模型
-		_, err := model.GenerateContent(context.Background(), history, llms.WithStreamingFunc(streamingFunc))
+		_, err := model.GenerateContent(c.Request.Context(), history, llms.WithStreamingFunc(streamingFunc))
 		if err != nil {
 			config.Log.Error("LLM 生成内容失败", zap.Error(err))
 		}
@@ -101,11 +105,36 @@ func ChatLLM(c *gin.Context) {
 		// 将 AI 回复加入历史记录
 		history = append(history, llms.TextParts(llms.ChatMessageTypeAI, string(responseContent)))
 
-		// 更新历史记录
-		mu.Lock()
-		chatHistoryMap[username] = history
-		mu.Unlock()
-
+		if isFirst {
+			titleContent := history
+			content, err = formatPrompt("帮我根据上面的内容生成一个标题，十个字以内，你只能回答我一个十个字以内标题，不需要其他内容")
+			if err != nil {
+				common.ErrorResponse(c, common.ServerError("生成标题失败！"))
+			}
+			titleContent = append(titleContent, content...)
+			titleResponse, err := model.GenerateContent(c.Request.Context(), titleContent)
+			if err != nil {
+				common.ErrorResponse(c, common.ServerError("生成标题失败！"))
+			}
+			title := titleResponse.Choices[0].Content
+			err = entity.InsertChat(&entity.ChatService{
+				Username: username,
+				Title:    title,
+				Message:  history,
+			})
+			if err != nil {
+				common.ErrorResponse(c, common.ServerError("保存聊天记录失败！"))
+			}
+		} else {
+			err = entity.UpdateChatMessage(&entity.ChatService{
+				ID:       req.ChatId,
+				Username: username,
+				Message:  history,
+			})
+			if err != nil {
+				common.ErrorResponse(c, common.ServerError("更新聊天记录失败！"))
+			}
+		}
 		return false // 只执行一次
 	})
 }
@@ -123,4 +152,63 @@ func formatPrompt(userPrompt string) (content []llms.MessageContent, err error) 
 		llms.TextParts(prompt[0].GetType(), prompt[0].GetContent()),
 	}
 	return
+}
+
+func GetChatList(c *gin.Context) {
+	username := c.GetString("name")
+	if username == "" {
+		common.ErrorResponse(c, common.NotLogin)
+		return
+	}
+	chats, err := entity.GetChatListByUserName(username)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError(err.Error()))
+		return
+	}
+	common.SuccessResponseWithData(c, chats)
+}
+
+func GetChat(c *gin.Context) {
+	chatId := c.Query("chatId")
+	username := c.GetString("name")
+	if chatId == "" || username == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	chat, err := entity.GetChatByIdAndUsername(chatId, username)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError(err.Error()))
+		return
+	}
+	common.SuccessResponseWithData(c, chat)
+}
+
+func DeleteChat(c *gin.Context) {
+	chatId := c.Query("chatId")
+	if chatId == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	err := entity.DeleteChat(chatId)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError(err.Error()))
+		return
+	}
+	common.SuccessResponse(c)
+}
+
+func UpdateChatTitle(c *gin.Context) {
+	title := c.Query("title")
+	chatId := c.Query("chatId")
+	username := c.GetString("name")
+	if title == "" || chatId == "" || username == "" {
+		common.ErrorResponse(c, common.ParamError)
+		return
+	}
+	err := entity.UpdateChatTitle(chatId, username, title)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError(err.Error()))
+		return
+	}
+	common.SuccessResponse(c)
 }
