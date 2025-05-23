@@ -99,6 +99,7 @@ func Router() (server *gin.Engine) {
 		llmGroup.GET("chatList", service.GetChatList)
 		llmGroup.DELETE("chat", service.DeleteChat)
 		llmGroup.PUT("chat", service.UpdateChatTitle)
+		llmGroup.POST("createChat", service.CreateChat)
 	}
 
 	return

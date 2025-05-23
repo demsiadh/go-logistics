@@ -94,33 +94,13 @@ func GetChatByIdAndUsername(id string, username string) (chatService *ChatServic
 	return chatService, nil
 }
 
-func UpdateChatMessage(chatService *ChatService) (err error) {
-	objectId, err := primitive.ObjectIDFromHex(chatService.ID)
-	filter := bson.M{
-		"_id":      objectId,
-		"username": chatService.Username,
-	}
-	rawMessage, err := json.Marshal(chatService.Message)
-	if err != nil {
-		return err
-	}
-	update := bson.M{
-		"$set": bson.M{
-			"message":    rawMessage,
-			"updateTime": util.GetMongoTimeNow(),
-		},
-	}
-	_, err = ChatCollection.UpdateOne(context.Background(), filter, update)
-	return
-}
-
-func InsertChat(chatService *ChatService) (err error) {
+func InsertChat(chatService *ChatService) (chatId string, err error) {
 	now := util.GetMongoTimeNow()
 
 	// 序列化 Message
 	rawMessage, err := json.Marshal(chatService.Message)
 	if err != nil {
-		return err
+		return
 	}
 
 	chat := &Chat{
@@ -133,6 +113,7 @@ func InsertChat(chatService *ChatService) (err error) {
 	}
 
 	_, err = ChatCollection.InsertOne(context.Background(), chat)
+	chatId = chat.ID.Hex()
 	return
 }
 
@@ -145,21 +126,37 @@ func DeleteChat(chatId string) (err error) {
 	return
 }
 
-func UpdateChatTitle(chatId, username, title string) (err error) {
-	objectId, err := primitive.ObjectIDFromHex(chatId)
+func UpdateChat(chatService *ChatService) error {
+	objectId, err := primitive.ObjectIDFromHex(chatService.ID)
 	if err != nil {
-		return
+		return err
 	}
+
 	filter := bson.M{
 		"_id":      objectId,
-		"username": username,
+		"username": chatService.Username,
 	}
-	update := bson.M{
-		"$set": bson.M{
-			"title":      title,
-			"updateTime": util.GetMongoTimeNow(),
-		},
+
+	update := bson.M{}
+
+	if chatService.Title != "" {
+		update["title"] = chatService.Title
 	}
-	_, err = ChatCollection.UpdateOne(context.Background(), filter, update)
-	return
+
+	if len(chatService.Message) > 0 {
+		rawMessage, err := json.Marshal(chatService.Message)
+		if err != nil {
+			return err
+		}
+		update["message"] = rawMessage
+	}
+
+	if len(update) == 0 {
+		return nil // 没有需要更新的内容
+	}
+
+	update["updateTime"] = util.GetMongoTimeNow()
+
+	_, err = ChatCollection.UpdateOne(context.Background(), filter, bson.M{"$set": update})
+	return err
 }

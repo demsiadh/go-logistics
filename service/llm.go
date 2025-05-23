@@ -13,6 +13,7 @@ import (
 	"go_logistics/model/entity"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -29,21 +30,18 @@ func ChatLLM(c *gin.Context) {
 		return
 	}
 	username := c.GetString("name")
-	// 第一次对话
+	chatService, err := entity.GetChatByIdAndUsername(req.ChatId, username)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError("获取对话信息失败！"))
+		return
+	}
+	isFirst := len(chatService.Message) > 0
 	var history []llms.MessageContent
-	isFirst := req.ChatId == ""
 	if isFirst {
 		history = []llms.MessageContent{
 			llms.TextParts(llms.ChatMessageTypeSystem, config.SystemPrompt),
 		}
 	} else {
-		var chatService *entity.ChatService
-		chatService, err = entity.GetChatByIdAndUsername(req.ChatId, username)
-		if err != nil {
-			config.Log.Error("获取对话信息失败", zap.Error(err))
-			common.ErrorResponse(c, common.ServerError("获取对话信息失败"))
-			return
-		}
 		history = chatService.Message
 	}
 
@@ -117,7 +115,8 @@ func ChatLLM(c *gin.Context) {
 				common.ErrorResponse(c, common.ServerError("生成标题失败！"))
 			}
 			title := titleResponse.Choices[0].Content
-			err = entity.InsertChat(&entity.ChatService{
+			err = entity.UpdateChat(&entity.ChatService{
+				ID:       req.ChatId,
 				Username: username,
 				Title:    title,
 				Message:  history,
@@ -126,7 +125,7 @@ func ChatLLM(c *gin.Context) {
 				common.ErrorResponse(c, common.ServerError("保存聊天记录失败！"))
 			}
 		} else {
-			err = entity.UpdateChatMessage(&entity.ChatService{
+			err = entity.UpdateChat(&entity.ChatService{
 				ID:       req.ChatId,
 				Username: username,
 				Message:  history,
@@ -205,10 +204,28 @@ func UpdateChatTitle(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	err := entity.UpdateChatTitle(chatId, username, title)
+	err := entity.UpdateChat(&entity.ChatService{
+		ID:       chatId,
+		Title:    title,
+		Username: username,
+	})
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError(err.Error()))
 		return
 	}
 	common.SuccessResponse(c)
+}
+
+func CreateChat(c *gin.Context) {
+	username := c.GetString("name")
+	title := "新对话" + time.Now().Format("2006-01-02 15:04:05")
+	chatId, err := entity.InsertChat(&entity.ChatService{
+		Title:    title,
+		Username: username,
+	})
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError(err.Error()))
+		return
+	}
+	common.SuccessResponseWithData(c, chatId)
 }
