@@ -105,7 +105,6 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 	// 定义白名单路径（支持精确匹配）
 	whitelist := map[string]bool{
 		"/api/user/login": true, // 登录接口
-		"/api/llm/chat":   true,
 	}
 
 	return func(c *gin.Context) {
