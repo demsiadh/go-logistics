@@ -1,8 +1,6 @@
 package main
 
-import (
-	"go_logistics/router"
-)
+import "go_logistics/router"
 
 func main() {
 	server := router.Router()

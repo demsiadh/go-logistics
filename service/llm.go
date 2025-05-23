@@ -2,88 +2,91 @@ package service
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	easyllm "github.com/soryetong/go-easy-llm"
-	"github.com/soryetong/go-easy-llm/easyai/chatmodule"
+	"github.com/tmc/langchaingo/llms"
+	"github.com/tmc/langchaingo/prompts"
+	"go.uber.org/zap"
 	"go_logistics/common"
 	"go_logistics/config"
+	"go_logistics/model/dto"
+	"io"
 	"net/http"
 )
 
-var LLMConfig = easyllm.DefaultConfigWithSecret("666", "666", chatmodule.ChatTypeHunYuan)
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-type WSMessage struct {
-	Content string `json:"content"`
-	Done    bool   `json:"done"`
-}
-
-type UserInput struct {
-	Model   string `json:"model"`
-	Message string `json:"message"`
-}
+const (
+	LLMModelHunyuanLite  string = "hunyuan-lite"
+	LLMModelHunyuanTurbo string = "hunyuan-turbos-latest"
+	LLMModelDeepseek     string = "deepseek-reasoner"
+)
 
 func ChatLLM(c *gin.Context) {
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		common.ErrorResponse(c, common.ServerError)
+	var req dto.LLMRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println(err)
+		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	defer conn.Close()
-
-	for {
-		client := easyllm.NewChatClient(LLMConfig)
-		if err := handleWebSocket(conn, client); err != nil {
-			config.Log.Info(err.Error())
-			break
-		}
+	content, err := formatPrompt(req.Message)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError("格式化提示词错误！"))
+		return
 	}
+	// 设置流式响应头
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	// 获取 gin.ResponseWriter 的底层 http.Flusher 接口
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		common.ErrorResponse(c, common.ServerError("流式传输不被支持！"))
+		return
+	}
+	// 开始流式响应
+	c.Stream(func(w io.Writer) bool {
+		streamingFunc := func(ctx context.Context, chunk []byte) error {
+			_, err := fmt.Fprintf(w, "%s", chunk)
+			if err != nil {
+				return err
+			}
+
+			flusher.Flush()
+			return nil
+		}
+		var model llms.Model
+		switch req.Model {
+		case LLMModelHunyuanLite:
+			model = config.HunyuanLite
+		case LLMModelHunyuanTurbo:
+			model = config.HunyuanTurbo
+		case LLMModelDeepseek:
+			model = config.Deepseek
+		default:
+			common.ErrorResponse(c, common.ServerError("不支持的模型！"))
+			return false
+		}
+		_, err := model.GenerateContent(context.Background(), content, llms.WithStreamingFunc(streamingFunc))
+		if err != nil {
+			config.Log.Error("LLM 生成内容失败", zap.Error(err))
+		}
+		return false // 只执行一次
+	})
 }
 
-func handleWebSocket(conn *websocket.Conn, client *easyllm.ChatClient) error {
-	var input UserInput
-	_, reader, err := conn.NextReader()
-	if err != nil {
-		if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-			config.Log.Info("Client closed the connection gracefully")
-			return err
-		}
-		config.Log.Info("Failed to read user message")
-		return err
-	}
+// 格式化提示词
+func formatPrompt(userPrompt string) (content []llms.MessageContent, err error) {
 
-	if err := json.NewDecoder(reader).Decode(&input); err != nil {
-		config.Log.Info("Failed to decode user message:")
-		return err
-	}
-
-	resp, err := client.StreamChat(context.Background(), &chatmodule.ChatRequest{
-		Model:   input.Model,
-		Message: input.Message,
+	promptTemplate := prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+		prompts.NewSystemMessagePromptTemplate(config.SystemPrompt, nil),
+		prompts.NewHumanMessagePromptTemplate(`{{.question}}`, []string{".question"}),
 	})
+	prompt, err := promptTemplate.FormatMessages(map[string]any{"question": userPrompt})
 	if err != nil {
-		config.Log.Info("Model call failed:")
-		return err
+		return
 	}
-
-	for content := range resp {
-		msg := WSMessage{Content: content.Content, Done: false}
-		if err := conn.WriteJSON(msg); err != nil {
-			config.Log.Info("WebSocket write failed:")
-			return err
-		}
+	content = []llms.MessageContent{
+		llms.TextParts(prompt[0].GetType(), prompt[0].GetContent()),
+		llms.TextParts(prompt[1].GetType(), prompt[1].GetContent()),
 	}
-
-	// Send completion signal
-	conn.WriteJSON(WSMessage{Done: true})
-	return nil
+	return
 }

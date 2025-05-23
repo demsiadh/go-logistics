@@ -94,7 +94,7 @@ func Router() (server *gin.Engine) {
 	}
 	llmGroup := apiGroup.Group("/llm")
 	{
-		llmGroup.GET("chat", service.ChatLLM)
+		llmGroup.POST("chat", service.ChatLLM)
 	}
 
 	return
