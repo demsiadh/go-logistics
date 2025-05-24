@@ -28,6 +28,7 @@ WORKDIR /app
 # 从编译阶段的镜像中拷贝编译后的二进制文件到运行镜像中
 COPY --from=builder /app/go-logistics-app /app/go-logistics-app
 COPY --from=builder /app/.env /app/.env
+COPY --from=builder /app/static /app/static
 
 # 暴露容器的 8080 端口，用于外部访问
 EXPOSE 8080

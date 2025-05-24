@@ -54,7 +54,7 @@ func initLLM() {
 		Log.Error("获取当前工作目录失败！", zap.Error(err))
 		panic(err)
 	}
-	systemPromptPath := filepath.Join(pwd, "config", "system_prompt.txt")
+	systemPromptPath := filepath.Join(pwd, "static", "system_prompt.txt")
 	SystemPromptByte, err := os.ReadFile(systemPromptPath)
 	if err != nil {
 		Log.Error("读取系统提示语失败！", zap.Error(err))
