@@ -11,7 +11,8 @@ var (
 	Log          *zap.Logger
 	HunyuanLite  *openai.LLM
 	HunyuanTurbo *openai.LLM
-	Deepseek     *openai.LLM
+	DeepseekR1   *openai.LLM
+	DeepseekV3   *openai.LLM
 	SystemPrompt string
 )
 

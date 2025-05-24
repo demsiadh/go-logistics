@@ -30,13 +30,22 @@ func initLLM() {
 		panic(err)
 	}
 	// 初始化deepseek
-	Deepseek, err = openai.New(
+	DeepseekR1, err = openai.New(
 		openai.WithBaseURL("https://api.deepseek.com"),
 		openai.WithModel("deepseek-reasoner"),
 		openai.WithToken(os.Getenv("DEEPSEEK_API_KEY")),
 	)
 	if err != nil {
-		Log.Error("初始化deepseek失败！", zap.Error(err))
+		Log.Error("初始化DeepSeekR1失败！", zap.Error(err))
+		panic(err)
+	}
+	DeepseekV3, err = openai.New(
+		openai.WithBaseURL("https://api.deepseek.com"),
+		openai.WithModel("deepseek-chat"),
+		openai.WithToken(os.Getenv("DEEPSEEK_API_KEY")),
+	)
+	if err != nil {
+		Log.Error("初始化DeepSeekV3失败！", zap.Error(err))
 		panic(err)
 	}
 	// 初始化系统提示词

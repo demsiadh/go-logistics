@@ -24,10 +24,10 @@ type Chat struct {
 
 // ChatService service层与数据层分离
 type ChatService struct {
-	ID       string
-	Username string
-	Message  []llms.MessageContent
-	Title    string
+	ID       string                `json:"id"`
+	Username string                `json:"username"`
+	Message  []llms.MessageContent `json:"message"`
+	Title    string                `json:"title"`
 }
 
 func GetChatListByUserName(username string) (chatServices []*ChatService, err error) {
