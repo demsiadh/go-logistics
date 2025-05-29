@@ -9,8 +9,8 @@ import (
 const (
 	EmbeddingModel    = "text-embedding-v3"
 	EmbeddingBaseUrl  = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-	PineconeNamespace = "langchain4j-demo-index"
-	PineconeHost      = "https://langchain4j-demo-index-3r0q8ns.svc.aped-4627-b74a.pinecone.io"
+	PineconeNamespace = "logistics"
+	PineconeHost      = "https://logistics-3r0q8ns.svc.aped-4627-b74a.pinecone.io"
 )
 
 var (

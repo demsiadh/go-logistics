@@ -101,6 +101,13 @@ func Router() (server *gin.Engine) {
 		llmGroup.PUT("chat", service.UpdateChatTitle)
 		llmGroup.POST("createChat", service.CreateChat)
 	}
+	fileGroup := apiGroup.Group("/file")
+	{
+		fileGroup.POST("/upload", service.UploadFile)
+		fileGroup.DELETE("/delete", service.DeleteFile)
+		fileGroup.POST("/list", service.GetFileList)
+		fileGroup.GET("/download", service.DownloadFile)
+	}
 
 	return
 }
