@@ -2,7 +2,7 @@ package util
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"os"
+	"go_logistics/config"
 	"time"
 )
 
@@ -40,12 +40,12 @@ func parseToken(tokenString string, secret []byte) (*CustomClaims, error) {
 
 // GenerateToken 生成 Token
 func GenerateToken(name string) (token string, err error) {
-	token, err = createToken(name, []byte(os.Getenv("SECRET_KEY")))
+	token, err = createToken(name, []byte(config.SecretKey))
 	return
 }
 
 // CheckToken 检查 Token
 func CheckToken(token string) (claims *CustomClaims, err error) {
-	claims, err = parseToken(token, []byte(os.Getenv("SECRET_KEY")))
+	claims, err = parseToken(token, []byte(config.SecretKey))
 	return
 }

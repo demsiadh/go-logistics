@@ -7,13 +7,22 @@ import (
 	"path/filepath"
 )
 
+const (
+	HunyuanBaseUrl    = "https://api.hunyuan.cloud.tencent.com/v1"
+	HunyuanLiteModel  = "hunyuan-lite"
+	HunyuanTurboModel = "hunyuan-turbos-latest"
+	DeepseekBaseUrl   = "https://api.deepseek.com"
+	DeepseekV3Model   = "deepseek-chat"
+	DeepseekR1Model   = "deepseek-reasoner"
+)
+
 func initLLM() {
 	var err error
 	// 初始化hunyuanLite
 	HunyuanLite, err = openai.New(
-		openai.WithBaseURL("https://api.hunyuan.cloud.tencent.com/v1"),
-		openai.WithModel("hunyuan-lite"),
-		openai.WithToken(os.Getenv("HUNYUAN_API_KEY")),
+		openai.WithBaseURL(HunyuanBaseUrl),
+		openai.WithModel(HunyuanLiteModel),
+		openai.WithToken(HunyuanApiKey),
 	)
 	if err != nil {
 		Log.Error("初始化hunyuanLite失败！", zap.Error(err))
@@ -21,9 +30,9 @@ func initLLM() {
 	}
 	// 初始化hunyuanTurbo
 	HunyuanTurbo, err = openai.New(
-		openai.WithBaseURL("https://api.hunyuan.cloud.tencent.com/v1"),
-		openai.WithModel("hunyuan-turbos-latest"),
-		openai.WithToken(os.Getenv("HUNYUAN_API_KEY")),
+		openai.WithBaseURL(HunyuanBaseUrl),
+		openai.WithModel(HunyuanTurboModel),
+		openai.WithToken(HunyuanApiKey),
 	)
 	if err != nil {
 		Log.Error("初始化hunyuanTurbo失败！", zap.Error(err))
@@ -31,18 +40,18 @@ func initLLM() {
 	}
 	// 初始化deepseek
 	DeepseekR1, err = openai.New(
-		openai.WithBaseURL("https://api.deepseek.com"),
-		openai.WithModel("deepseek-reasoner"),
-		openai.WithToken(os.Getenv("DEEPSEEK_API_KEY")),
+		openai.WithBaseURL(DeepseekBaseUrl),
+		openai.WithModel(DeepseekR1Model),
+		openai.WithToken(DeepseekApiKey),
 	)
 	if err != nil {
 		Log.Error("初始化DeepSeekR1失败！", zap.Error(err))
 		panic(err)
 	}
 	DeepseekV3, err = openai.New(
-		openai.WithBaseURL("https://api.deepseek.com"),
-		openai.WithModel("deepseek-chat"),
-		openai.WithToken(os.Getenv("DEEPSEEK_API_KEY")),
+		openai.WithBaseURL(DeepseekBaseUrl),
+		openai.WithModel(DeepseekV3Model),
+		openai.WithToken(DeepseekApiKey),
 	)
 	if err != nil {
 		Log.Error("初始化DeepSeekV3失败！", zap.Error(err))

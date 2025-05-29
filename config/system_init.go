@@ -21,4 +21,5 @@ func init() {
 	initLog()
 	initMongoDB()
 	initLLM()
+	initPinecone()
 }

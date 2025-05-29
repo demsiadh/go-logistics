@@ -5,7 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
-	"os"
 	"time"
 )
 
@@ -54,11 +53,11 @@ func initMongoDB() {
 
 func getDefaultConfig() (cfg *MongoDBConfig) {
 	cfg = &MongoDBConfig{
-		URI:        os.Getenv("MONGODB_URI"),
-		Database:   os.Getenv("MONGODB_DATABASE"),
-		Username:   os.Getenv("MONGODB_USERNAME"),
-		Password:   os.Getenv("MONGODB_PASSWORD"),
-		AuthSource: os.Getenv("MONGODB_AUTH_SOURCE"),
+		URI:        MongodbUri,
+		Database:   MongodbDatabase,
+		Username:   MongodbUsername,
+		Password:   MongodbPassword,
+		AuthSource: MongodbAuthSource,
 	}
 	return
 }

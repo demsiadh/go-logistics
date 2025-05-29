@@ -17,12 +17,8 @@ import (
 )
 
 const (
-	LLMModelHunyuanLite  string = "hunyuan-lite"
-	LLMModelHunyuanTurbo string = "hunyuan-turbos-latest"
-	LLMModelDeepseekR1   string = "deepseek-reasoner"
-	LLMModelDeepseekV3   string = "deepseek-chat"
-	MaxContextMessage    int    = 20
-	MaxHistoryMessage    int    = 100
+	MaxContextMessage int = 20
+	MaxHistoryMessage int = 100
 )
 
 func ChatLLM(c *gin.Context) {
@@ -95,13 +91,13 @@ func ChatLLM(c *gin.Context) {
 
 		var model llms.Model
 		switch req.Model {
-		case LLMModelHunyuanLite:
+		case config.HunyuanLiteModel:
 			model = config.HunyuanLite
-		case LLMModelHunyuanTurbo:
+		case config.HunyuanTurboModel:
 			model = config.HunyuanTurbo
-		case LLMModelDeepseekR1:
+		case config.DeepseekR1Model:
 			model = config.DeepseekR1
-		case LLMModelDeepseekV3:
+		case config.DeepseekV3Model:
 			model = config.DeepseekV3
 		default:
 			common.ErrorResponse(c, common.ServerError("不支持的模型！"))
