@@ -8,17 +8,24 @@ import (
 )
 
 const (
-	ERROR = "error"
+	LevelKey      = "level"
+	NameKey       = "logger"
+	StacktraceKey = "stacktrace"
+	MessageKey    = "msg"
+)
+
+var (
+	Log *zap.Logger
 )
 
 // NewProductionLogger 创建生产环境下的日志记录器
 func NewProductionLogger() *zap.Logger {
 	return zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-			LevelKey:       "level",
-			NameKey:        "logger",
-			StacktraceKey:  "stacktrace",
-			MessageKey:     "msg",
+			LevelKey:       LevelKey,
+			NameKey:        NameKey,
+			StacktraceKey:  StacktraceKey,
+			MessageKey:     MessageKey,
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.LowercaseLevelEncoder,
 			EncodeTime:     CustomTimeEncoder, // 使用自定义编码器

@@ -4,8 +4,11 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.uber.org/zap"
 	"time"
+)
+
+var (
+	MongoClient *mongo.Client
 )
 
 // MongoDBConfig MongoDB配置结构
@@ -35,20 +38,14 @@ func initMongoDB() {
 
 	// 建立连接
 	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		Log.Error("MongoDB连接失败: ", zap.Any(ERROR, err))
-		panic(err)
-	}
+	handleError("连接MongoDB失败！", err)
 
 	// 检查连接
 	err = client.Ping(ctx, nil)
-	if err != nil {
-		Log.Error("MongoDB心跳检测失败: ", zap.Any(ERROR, err))
-		panic(err)
-	}
+	handleError("MongoDB心跳检测失败！", err)
 
 	MongoClient = client
-	Log.Info("成功连接到MongoDB!")
+	handleSuccess("初始化MongoDB成功！")
 }
 
 func getDefaultConfig() (cfg *MongoDBConfig) {

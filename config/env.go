@@ -20,9 +20,7 @@ var (
 
 func initEnvConfig() {
 	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	handleError("初始化环境变量失败！", err)
 	MongodbUri = os.Getenv("MONGODB_URI")
 	MongodbDatabase = os.Getenv("MONGODB_DATABASE")
 	MongodbUsername = os.Getenv("MONGODB_USERNAME")
@@ -33,4 +31,5 @@ func initEnvConfig() {
 	DeepseekApiKey = os.Getenv("DEEPSEEK_API_KEY")
 	AliBaiLianApiKey = os.Getenv("ALI_BAILIAN_API_KEY")
 	PineconeApiKey = os.Getenv("PINECONE_API_KEY")
+	handleSuccess("初始化环境变量成功！")
 }

@@ -1,25 +1,32 @@
 package config
 
 import (
-	"github.com/tmc/langchaingo/llms/openai"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 )
 
 var (
-	MongoClient  *mongo.Client
-	Log          *zap.Logger
-	HunyuanLite  *openai.LLM
-	HunyuanTurbo *openai.LLM
-	DeepseekR1   *openai.LLM
-	DeepseekV3   *openai.LLM
-	SystemPrompt string
+	initStep int
 )
 
 func init() {
-	initEnvConfig()
 	initLog()
+	initEnvConfig()
 	initMongoDB()
 	initLLM()
 	initPinecone()
+}
+
+// 处理初始化成功日志
+func handleSuccess(msg string) {
+	initStep++
+	Log.Info(msg, zap.Int("initStep", initStep))
+}
+
+// 处理初始化失败日志
+func handleError(msg string, err error) {
+	if err != nil {
+		initStep++
+		Log.Error(msg, zap.Int("initStep", initStep), zap.Error(err))
+		panic(err)
+	}
 }
