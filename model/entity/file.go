@@ -33,6 +33,7 @@ type File struct {
 	FileSize    int64              `bson:"fileSize" json:"fileSize"`
 	ContentType string             `bson:"contentType" json:"contentType"`
 	FileData    []byte             `bson:"fileData" json:"fileData"`
+	VectorIds   []string           `bson:"vectorIds" json:"VectorIds"`
 	UploadTime  primitive.DateTime `bson:"uploadTime" json:"uploadTime"`
 }
 

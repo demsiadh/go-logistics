@@ -12,7 +12,6 @@ require (
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/paulmach/orb v0.11.1
 	github.com/tmc/langchaingo v0.1.13
-	github.com/unidoc/unioffice v1.39.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.uber.org/zap v1.27.0
 )
@@ -30,6 +29,7 @@ require (
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen/v2 v2.1.0 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -65,10 +65,11 @@ require (
 	github.com/pinecone-io/go-pinecone v0.4.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkoukk/tiktoken-go v0.1.6 // indirect
-	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -91,7 +92,7 @@ require (
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
-	google.golang.org/grpc v1.64.0 // indirect
+	google.golang.org/grpc v1.65.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect

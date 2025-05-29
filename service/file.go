@@ -39,6 +39,14 @@ func UploadFile(c *gin.Context) {
 		common.ErrorResponse(c, common.ServerError("文件读取错误！"))
 		return
 	}
+	var segmentIds []string
+	if fileTypeInt == int(entity.AIRepository) {
+		segmentIds, err = entity.InsertVector(c.Request.Context(), file)
+		if err != nil {
+			common.ErrorResponse(c, common.ServerError("解析文档失败！"))
+			return
+		}
+	}
 
 	err = entity.InsertFile(c.Request.Context(), &entity.File{
 		FileName:    fileName,
@@ -46,6 +54,7 @@ func UploadFile(c *gin.Context) {
 		FileSize:    size,
 		ContentType: fileContentType,
 		FileData:    fileData,
+		VectorIds:   segmentIds,
 	})
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError("文件上传失败！"))
@@ -61,7 +70,17 @@ func DeleteFile(c *gin.Context) {
 		common.ErrorResponse(c, common.ParamError)
 		return
 	}
-	err := entity.DeleteFile(c.Request.Context(), fileId)
+	file, err := entity.GetFileById(c.Request.Context(), fileId)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError("文件获取失败！"))
+		return
+	}
+	err = entity.DeleteVector(c.Request.Context(), file.VectorIds)
+	if err != nil {
+		common.ErrorResponse(c, common.ServerError("向量删除失败！"))
+		return
+	}
+	err = entity.DeleteFile(c.Request.Context(), fileId)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError("文件删除失败！"))
 		return
