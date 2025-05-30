@@ -13,6 +13,7 @@ import (
 	"go_logistics/model/entity"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -160,23 +161,36 @@ func formatPrompt(userPrompt string, isRAG bool) (content []llms.MessageContent,
 	if isRAG {
 		textSegments, err := entity.SearchAndExtractContents(context.Background(), userPrompt, 1)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to extract contents: %w", err)
 		}
-		contextText = ""
+		var sb strings.Builder
 		for _, seg := range textSegments {
-			contextText += seg + "\n"
+			sb.WriteString(seg)
+			sb.WriteString("\n")
 		}
+		contextText = sb.String()
 	}
 
-	promptTemplate := prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
-		prompts.NewGenericMessagePromptTemplate("generic", "以下是可能相关的背景信息：\n{{.context}}", []string{"context"}),
+	var formatters []prompts.MessageFormatter
+	if isRAG {
+		formatters = append(formatters,
+			prompts.NewGenericMessagePromptTemplate("generic", "以下是可能相关的背景信息：\n{{.context}}", []string{"context"}),
+		)
+	}
+	formatters = append(formatters,
 		prompts.NewHumanMessagePromptTemplate("{{.input}}", []string{"input"}),
-	})
+	)
 
-	messages, err := promptTemplate.FormatMessages(map[string]interface{}{
-		"context": contextText,
-		"input":   userPrompt,
-	})
+	promptTemplate := prompts.NewChatPromptTemplate(formatters)
+
+	params := map[string]interface{}{
+		"input": userPrompt,
+	}
+	if isRAG {
+		params["context"] = contextText
+	}
+
+	messages, err := promptTemplate.FormatMessages(params)
 	if err != nil {
 		return nil, err
 	}

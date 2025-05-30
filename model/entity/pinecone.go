@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"github.com/tmc/langchaingo/documentloaders"
 	"github.com/tmc/langchaingo/textsplitter"
 	"go.uber.org/zap"
@@ -13,6 +14,7 @@ import (
 const (
 	ChunkSize    = 256
 	ChunkOverlap = 50
+	BatchSize    = 10
 )
 
 func InsertVector(ctx context.Context, file multipart.File) (ids []string, err error) {
@@ -21,20 +23,34 @@ func InsertVector(ctx context.Context, file multipart.File) (ids []string, err e
 		config.Log.Error("文件 seek 失败！", zap.Error(err))
 		return
 	}
+
 	loader := documentloaders.NewText(file)
 	docs, err := loader.LoadAndSplit(ctx, textsplitter.NewRecursiveCharacter(
 		textsplitter.WithChunkSize(ChunkSize),
 		textsplitter.WithChunkOverlap(ChunkOverlap),
 	))
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	ids, err = config.PineconeStore.AddDocuments(ctx, docs)
-	if err != nil {
-		return
+	// 批量插入，每次最多 10 个文档
+	totalIDs := make([]string, 0, len(docs))
+
+	for i := 0; i < len(docs); i += BatchSize {
+		end := i + BatchSize
+		if end > len(docs) {
+			end = len(docs)
+		}
+		batch := docs[i:end]
+
+		ids, err := config.PineconeStore.AddDocuments(ctx, batch)
+		if err != nil {
+			return nil, fmt.Errorf("插入文档批次失败 [%d:%d]:  %w", i, end, err)
+		}
+		totalIDs = append(totalIDs, ids...)
 	}
-	return
+
+	return totalIDs, nil
 }
 
 func SearchAndExtractContents(ctx context.Context, query string, topK int) (textSegments []string, err error) {

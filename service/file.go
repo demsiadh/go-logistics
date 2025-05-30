@@ -3,7 +3,9 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"go_logistics/common"
+	"go_logistics/config"
 	"go_logistics/model/entity"
 	"strconv"
 )
@@ -43,6 +45,7 @@ func UploadFile(c *gin.Context) {
 	if fileTypeInt == int(entity.AIRepository) {
 		segmentIds, err = entity.InsertVector(c.Request.Context(), file)
 		if err != nil {
+			config.Log.Error("向向量数据库插入向量失败！", zap.Error(err))
 			common.ErrorResponse(c, common.ServerError("解析文档失败！"))
 			return
 		}
