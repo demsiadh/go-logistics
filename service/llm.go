@@ -48,12 +48,12 @@ func ChatLLM(c *gin.Context) {
 		if len(totalHistory) < MaxContextMessage {
 			contextHistory = totalHistory
 		} else {
-			contextHistory = totalHistory[len(totalHistory)-(MaxContextMessage-1):]
+			contextHistory = totalHistory[len(totalHistory)-(MaxContextMessage-2):]
 		}
 	}
 
 	// 格式化当前用户输入
-	content, err := formatPrompt(req.Message)
+	content, err := formatPrompt(req.Message, req.IsRAG)
 	if err != nil {
 		common.ErrorResponse(c, common.ServerError("格式化提示词错误！"))
 		return
@@ -115,7 +115,7 @@ func ChatLLM(c *gin.Context) {
 
 		if isFirst {
 			titleContent := totalHistory[1:]
-			content, err = formatPrompt("帮我根据上面的内容生成一个标题，十个字以内，你只能回答我一个十个字以内标题，不需要其他内容，如果无法生成标题，就输出无标题")
+			content, err = formatPrompt("帮我根据上面的内容生成一个标题，十个字以内，你只能回答我一个十个字以内标题，不需要其他内容，如果无法生成标题，就输出无标题", false)
 			if err != nil {
 				common.ErrorResponse(c, common.ServerError("生成标题失败！"))
 			}
@@ -154,17 +154,34 @@ func ChatLLM(c *gin.Context) {
 	})
 }
 
-// 格式化提示词
-func formatPrompt(userPrompt string) (content []llms.MessageContent, err error) {
+func formatPrompt(userPrompt string, isRAG bool) (content []llms.MessageContent, err error) {
+	// 从向量数据库中搜索相关内容
+	var textSegment []string
+	if isRAG {
+		textSegment, err = entity.SearchAndExtractContents(context.Background(), userPrompt, 1)
+		if err != nil {
+			return
+		}
+	}
+
+	// 构建包含上下文的提示词模板
 	promptTemplate := prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+		prompts.NewSystemMessagePromptTemplate("以下是可能相关的背景信息：\n{{context}}", []string{"context"}),
 		prompts.NewHumanMessagePromptTemplate(`{{.question}}`, []string{".question"}),
 	})
-	prompt, err := promptTemplate.FormatMessages(map[string]any{"question": userPrompt})
+
+	// 填充模板中的变量
+	prompt, err := promptTemplate.FormatMessages(map[string]any{
+		"context":  textSegment,
+		"question": userPrompt,
+	})
 	if err != nil {
 		return
 	}
-	content = []llms.MessageContent{
-		llms.TextParts(prompt[0].GetType(), prompt[0].GetContent()),
+
+	content = make([]llms.MessageContent, len(prompt))
+	for i, msg := range prompt {
+		content[i] = llms.TextParts(msg.GetType(), msg.GetContent())
 	}
 	return
 }
