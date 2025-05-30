@@ -5,4 +5,5 @@ type LLMRequest struct {
 	Message string `json:"message"`
 	ChatId  string `json:"chatId"`
 	IsRAG   bool   `json:"isRAG"`
+	IsAgent bool   `json:"isAgent"`
 }

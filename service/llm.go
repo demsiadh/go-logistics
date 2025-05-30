@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/tmc/langchaingo/agents"
+	"github.com/tmc/langchaingo/chains"
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/prompts"
+	"github.com/tmc/langchaingo/tools"
 	"go.uber.org/zap"
+	agent2 "go_logistics/agent"
 	"go_logistics/common"
 	"go_logistics/config"
 	"go_logistics/model/dto"
@@ -90,7 +94,6 @@ func ChatLLM(c *gin.Context) {
 			flusher.Flush()
 			return nil
 		}
-
 		var model llms.Model
 		switch req.Model {
 		case config.HunyuanLiteModel:
@@ -105,11 +108,24 @@ func ChatLLM(c *gin.Context) {
 			common.ErrorResponse(c, common.ServerError("不支持的模型！"))
 			return false
 		}
-
-		// 使用完整的对话历史调用模型
-		_, err := model.GenerateContent(c.Request.Context(), contextHistory, llms.WithStreamingFunc(streamingFunc))
-		if err != nil {
-			config.Log.Error("LLM 生成内容失败", zap.Error(err))
+		if req.IsAgent {
+			result, err := RunAgentWithHistory(c.Request.Context(), contextHistory)
+			if result != "" {
+				// 如果有 Agent 结果，直接输出
+				fmt.Fprintf(w, "%s", result)
+				flusher.Flush()
+				responseContent = []byte(result)
+			} else {
+				fmt.Fprintf(w, "%s", err.Error())
+				flusher.Flush()
+				responseContent = []byte(result)
+			}
+		} else {
+			// 使用完整的对话历史调用模型
+			_, err := model.GenerateContent(c.Request.Context(), contextHistory, llms.WithStreamingFunc(streamingFunc))
+			if err != nil {
+				config.Log.Error("LLM 生成内容失败", zap.Error(err))
+			}
 		}
 
 		// 将 AI 回复加入历史记录
@@ -277,4 +293,51 @@ func CreateChat(c *gin.Context) {
 		return
 	}
 	common.SuccessResponseWithData(c, chatId)
+}
+
+func TestAgent(c *gin.Context) {
+	agentTools := []tools.Tool{
+		&agent2.GetUserDetailByName{},
+	}
+	agent := agents.NewOneShotAgent(config.DeepseekV3, agentTools)
+	executor := agents.NewExecutor(
+		agent,
+	)
+	// 计算
+	result, err := chains.Run(context.Background(), executor, "查询zhangsan的信息")
+	fmt.Println(result, err)
+}
+
+func RunAgentWithHistory(ctx context.Context, contextHistory []llms.MessageContent) (response string, err error) {
+	agentTools := []tools.Tool{
+		&agent2.GetUserDetailByName{},
+	}
+	message := messagesToString(contextHistory)
+	fmt.Println(message)
+	agent := agents.NewOneShotAgent(config.DeepseekV3, agentTools)
+	executor := agents.NewExecutor(agent)
+
+	response, err = chains.Run(ctx, executor, message)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func messagesToString(messages []llms.MessageContent) string {
+	var sb strings.Builder
+	for i, msg := range messages {
+		var text string
+		if len(msg.Parts) > 0 {
+			if content, ok := msg.Parts[0].(llms.TextContent); ok {
+				text = content.Text
+			} else {
+				config.Log.Warn("消息内容非 TextContent 类型", zap.Int("index", i), zap.String("role", string(msg.Role)))
+			}
+		} else {
+			config.Log.Warn("消息内容为空", zap.Int("index", i), zap.String("role", string(msg.Role)))
+		}
+		sb.WriteString(fmt.Sprintf("[%s]: %s\n", msg.Role, text))
+	}
+	return sb.String()
 }

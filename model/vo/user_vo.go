@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"encoding/json"
 	"go_logistics/model/entity"
 	"strconv"
 	"time"
@@ -45,4 +46,20 @@ func ToUserVOList(users []*entity.User) []UserVO {
 		voList = append(voList, ToUserVO(user))
 	}
 	return voList
+}
+
+func (vo UserVO) String() string {
+	statusInt, _ := strconv.Atoi(vo.Status)
+
+	userMap := map[string]interface{}{
+		"name":       vo.Name,
+		"phone":      vo.Phone,
+		"email":      vo.Email,
+		"status":     entity.UserStatus(statusInt).String(),
+		"createTime": vo.CreateTime,
+		"updateTime": vo.UpdateTime,
+	}
+
+	data, _ := json.Marshal(userMap)
+	return string(data)
 }
