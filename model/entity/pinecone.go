@@ -10,6 +10,11 @@ import (
 	"mime/multipart"
 )
 
+const (
+	ChunkSize    = 256
+	ChunkOverlap = 50
+)
+
 func InsertVector(ctx context.Context, file multipart.File) (ids []string, err error) {
 	_, err = file.Seek(io.SeekStart, io.SeekStart)
 	if err != nil {
@@ -18,8 +23,8 @@ func InsertVector(ctx context.Context, file multipart.File) (ids []string, err e
 	}
 	loader := documentloaders.NewText(file)
 	docs, err := loader.LoadAndSplit(ctx, textsplitter.NewRecursiveCharacter(
-		textsplitter.WithChunkSize(1000),
-		textsplitter.WithChunkOverlap(200),
+		textsplitter.WithChunkSize(ChunkSize),
+		textsplitter.WithChunkOverlap(ChunkOverlap),
 	))
 	if err != nil {
 		return

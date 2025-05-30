@@ -169,7 +169,7 @@ func formatPrompt(userPrompt string, isRAG bool) (content []llms.MessageContent,
 	}
 
 	promptTemplate := prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
-		prompts.NewHumanMessagePromptTemplate("以下是可能相关的背景信息：\n{{.context}}", []string{"context"}),
+		prompts.NewGenericMessagePromptTemplate("generic", "以下是可能相关的背景信息：\n{{.context}}", []string{"context"}),
 		prompts.NewHumanMessagePromptTemplate("{{.input}}", []string{"input"}),
 	})
 
