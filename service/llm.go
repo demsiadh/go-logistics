@@ -55,6 +55,7 @@ func ChatLLM(c *gin.Context) {
 	// 格式化当前用户输入
 	content, err := formatPrompt(req.Message, req.IsRAG)
 	if err != nil {
+		config.Log.Error("111", zap.Error(err))
 		common.ErrorResponse(c, common.ServerError("格式化提示词错误！"))
 		return
 	}
@@ -155,35 +156,36 @@ func ChatLLM(c *gin.Context) {
 }
 
 func formatPrompt(userPrompt string, isRAG bool) (content []llms.MessageContent, err error) {
-	// 从向量数据库中搜索相关内容
-	var textSegment []string
+	var contextText string
 	if isRAG {
-		textSegment, err = entity.SearchAndExtractContents(context.Background(), userPrompt, 1)
+		textSegments, err := entity.SearchAndExtractContents(context.Background(), userPrompt, 1)
 		if err != nil {
-			return
+			return nil, err
+		}
+		contextText = ""
+		for _, seg := range textSegments {
+			contextText += seg + "\n"
 		}
 	}
 
-	// 构建包含上下文的提示词模板
 	promptTemplate := prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
-		prompts.NewSystemMessagePromptTemplate("以下是可能相关的背景信息：\n{{context}}", []string{"context"}),
-		prompts.NewHumanMessagePromptTemplate(`{{.question}}`, []string{".question"}),
+		prompts.NewHumanMessagePromptTemplate("以下是可能相关的背景信息：\n{{.context}}", []string{"context"}),
+		prompts.NewHumanMessagePromptTemplate("{{.input}}", []string{"input"}),
 	})
 
-	// 填充模板中的变量
-	prompt, err := promptTemplate.FormatMessages(map[string]any{
-		"context":  textSegment,
-		"question": userPrompt,
+	messages, err := promptTemplate.FormatMessages(map[string]interface{}{
+		"context": contextText,
+		"input":   userPrompt,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	content = make([]llms.MessageContent, len(prompt))
-	for i, msg := range prompt {
+	content = make([]llms.MessageContent, len(messages))
+	for i, msg := range messages {
 		content[i] = llms.TextParts(msg.GetType(), msg.GetContent())
 	}
-	return
+	return content, nil
 }
 
 func GetChatList(c *gin.Context) {
