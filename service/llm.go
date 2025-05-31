@@ -144,7 +144,7 @@ func ChatLLM(c *gin.Context) {
 			}
 			title := titleResponse.Choices[0].Content
 			if len(title) > 10 {
-				title = "无标题"
+				title = req.Message
 			}
 			err = entity.UpdateChat(&entity.ChatService{
 				ID:       req.ChatId,
@@ -295,25 +295,11 @@ func CreateChat(c *gin.Context) {
 	common.SuccessResponseWithData(c, chatId)
 }
 
-func TestAgent(c *gin.Context) {
-	agentTools := []tools.Tool{
-		&agent2.GetUserDetailByName{},
-	}
-	agent := agents.NewOneShotAgent(config.DeepseekV3, agentTools)
-	executor := agents.NewExecutor(
-		agent,
-	)
-	// 计算
-	result, err := chains.Run(context.Background(), executor, "查询zhangsan的信息")
-	fmt.Println(result, err)
-}
-
 func RunAgentWithHistory(ctx context.Context, contextHistory []llms.MessageContent) (response string, err error) {
 	agentTools := []tools.Tool{
 		&agent2.GetUserDetailByName{},
 	}
 	message := messagesToString(contextHistory)
-	fmt.Println(message)
 	agent := agents.NewOneShotAgent(config.DeepseekV3, agentTools)
 	executor := agents.NewExecutor(agent)
 
